@@ -34,20 +34,13 @@ class HitSensor;
 class PlacementInfo;
 
 // from Starlight's header files. TODO clean this up, and include them in the proper places
-
-PlayerActorHakoniwa* getPlayerActor(al::LiveActor const*, int);
-
-PlayerActorHakoniwa* tryGetPlayerActor(al::PlayerHolder const*, int);
-
 sead::Heap* getCurrentHeap();
+
+sead::Heap* getSequenceHeap();
 
 int getSubActorNum(al::LiveActor const*);
 
 al::LiveActor* getSubActor(al::LiveActor const*, int);
-
-sead::Vector3f* getVelocity(al::LiveActor const*);
-
-sead::Quatf* getQuat(al::LiveActor const*);
 
 int getPlayerControllerPort(int);
 
@@ -78,6 +71,9 @@ void setGravity(al::LiveActor const*, sead::Vector3f const&);
 void setFront(al::LiveActor*, sead::Vector3f const&);
 
 void setQuat(al::LiveActor*, const sead::Quatf&);
+
+void calcQuatRotateDegree(sead::Vector3f* rpy, sead::Quatf const& quat);
+
 
 void setPaneTexture(al::IUseLayout*, char const*, nn::ui2d::TextureInfo const*);
 
@@ -172,7 +168,7 @@ void showModel(al::LiveActor*);
 namespace rs {
 uint32_t getStageShineAnimFrame(const al::LiveActor*, const char*);
 
-PlayerActorHakoniwa* getPlayerActor(const al::Scene*);
+PlayerActorBase* getPlayerActor(const al::Scene*);
 
 bool isInChangeStageArea(al::LiveActor const*, sead::Vector3f const*);
 

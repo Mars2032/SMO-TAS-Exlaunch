@@ -37,7 +37,6 @@ public:
     void initPlayer(al::ActorInitInfo const&, PlayerInitInfo const&);
     void exeDemo();
 
-    unsigned char padding[0x18]; // 0x108
     PlayerInfo *mPlayerInfo; // 0x128
     PlayerConst *mPlayerConst; // 0x130
     PlayerInput *mPlayerInput; //0x138

@@ -8,7 +8,15 @@
 
 namespace al
 {
-
+    class StageResourceKeeper;
+    class LiveActorKit;
+    class LayoutKit;
+    class SceneStopCtrl;
+    class SceneMsgCtrl;
+    class ScreenCoverCtrl;
+    class AudioDirector;
+    class AudioKeeper;
+    class NerveKeeper;
     class GraphicsInitArg;
 
     class Scene : public al::NerveExecutor, public al::IUseAudioKeeper, public al::IUseCamera, public al::IUseSceneObjHolder
@@ -32,6 +40,17 @@ namespace al
 
         void initLiveActorKitWithGraphics(al::GraphicsInitArg const &, al::SceneInitInfo const &, int, int, int);
 
-        unsigned char _28[0xD8-0x28];
+        bool mIsAlive;
+        sead::FixedSafeString<0x40> mName;
+        StageResourceKeeper* mStageResourceKeeper;
+        LiveActorKit* mLiveActorKit;
+        LayoutKit* mLayoutKit;
+        SceneObjHolder* mSceneObjHolder;
+        SceneStopCtrl* mSceneStopCtrl;
+        SceneMsgCtrl* mSceneMsgCtrl;
+        ScreenCoverCtrl* mScreenCoverCtrl;
+        AudioDirector* mAudioDirector;
+        AudioKeeper* mAudioKeeper;
+        NerveKeeper* mNerveKeeper;
     };
 };

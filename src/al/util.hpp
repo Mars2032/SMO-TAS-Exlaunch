@@ -53,6 +53,22 @@ namespace al
 {
 // getters
 
+    sead::Vector3f& getSensorPos(al::HitSensor const*);
+    float getSensorRadius(al::HitSensor const*);
+    bool isSensorValid(al::HitSensor const*);
+    bool isSensorEye(al::HitSensor const*);
+    bool isSensorPlayerEye(al::HitSensor const*);
+    bool isSensorPlayerAttack(al::HitSensor const*);
+    bool isSensorEnemyAttack(al::HitSensor const*);
+    bool isSensorEnemyBody(al::HitSensor const*);
+    bool isSensorNpc(al::HitSensor const*);
+    bool isSensorBindableAll(al::HitSensor const*);
+    bool isSensorCollision(al::HitSensor const*);
+    bool isSensorMapObj(al::HitSensor const*);
+    bool isSensorPlayerAll(al::HitSensor const*);
+    bool isSensorHoldObj(al::HitSensor const*);
+    bool isSensorRide(al::HitSensor const*);
+
     struct SceneMsgCtrl;
 
     sead::Vector3f *getCameraUp(al::IUseCamera const *, int);
@@ -85,8 +101,6 @@ namespace al
     int getPlayerControllerPort(int);
 
     char const *getActionName(al::LiveActor const *);
-
-    char const *getActionFrame(al::LiveActor const *);
 
     bool isSklAnimExist(al::LiveActor const *, const char *);
     bool clearSklAnimInterpole(al::LiveActor *);
@@ -450,12 +464,6 @@ namespace al
     bool isInAreaObj(al::LiveActor const *, const char *);
 
     al::AreaObj *tryFindAreaObj(al::LiveActor const *, const char *);
-
-    void tryGetAreaObjArg(int *, al::AreaObj const *, const char *);
-    void tryGetAreaObjArg(float *, al::AreaObj const *, const char *);
-    void tryGetAreaObjArg(bool *, al::AreaObj const *, const char *);
-
-    void tryGetAreaObjStringArg(const char **, al::AreaObj const *, const char *);
 
     void offCollide(al::LiveActor *);
     void onCollide(al::LiveActor *);

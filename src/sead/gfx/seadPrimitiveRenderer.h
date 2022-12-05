@@ -131,27 +131,27 @@ public:
     void drawCylinder16(const Color4f &, const Color4f &);
     void drawCylinder32(const Color4f &, const Color4f &);
 
-    void drawQuad(const QuadArg &);
-    void drawQuad(const Texture &, const QuadArg &, const UVArg &);
-    void drawBox(const QuadArg &);
-    void drawCube(const CubeArg &);
-    void drawWireCube(const CubeArg &);
-    void drawLine(const Vector3f &, const Vector3f &, const Color4f &, const Color4f &);
-    void drawLine(const Vector3f &, const Vector3f &, const Color4f &);
-    void drawSphere4x8(const Vector3f &, float, const Color4f &, const Color4f &);
-    void drawSphere4x8(const Vector3f &, float, const Color4f &);
-    void drawSphere8x16(const Vector3f &, float, const Color4f &, const Color4f &);
-    void drawSphere8x16(const Vector3f &, float, const Color4f &);
-    void drawDisk16(const Vector3f &, float, const Color4f &, const Color4f &);
-    void drawDisk16(const Vector3f &, float, const Color4f &);
-    void drawDisk32(const Vector3f &, float, const Color4f &, const Color4f &);
-    void drawDisk32(const Vector3f &, float, const Color4f &);
-    void drawCircle16(const Vector3f &, float, const Color4f &);
-    void drawCircle32(const Vector3f &, float, const Color4f &);
-    void drawCylinder16(const Vector3f &, float, float, const Color4f &, const Color4f &);
-    void drawCylinder16(const Vector3f &, float, float, const Color4f &);
-    void drawCylinder32(const Vector3f &, float, float, const Color4f &, const Color4f &);
-    void drawCylinder32(const Vector3f &, float, float, const Color4f &);
+    void drawQuad(const QuadArg&);
+    void drawQuad(const Texture&, const QuadArg&, const UVArg&);
+    void drawBox(const QuadArg&);
+    void drawCube(const CubeArg&);
+    void drawWireCube(const CubeArg&);
+    void drawLine(const Vector3f&, const Vector3f&, const Color4f&, const Color4f&);
+    void drawLine(const Vector3f&, const Vector3f&, const Color4f&);
+    void drawSphere4x8(const Vector3f& pos, float radius, const Color4f&, const Color4f&);
+    void drawSphere4x8(const Vector3f& pos, float radius, const Color4f& color);
+    void drawSphere8x16(const Vector3f& pos, float radius, const Color4f& color, const Color4f& color2);
+    void drawSphere8x16(const Vector3f& pos, float radius, const Color4f& color);
+    void drawDisk16(const Vector3f& pos, float radius, const Color4f&, const Color4f&);
+    void drawDisk16(const Vector3f& pos, float radius, const Color4f& color);
+    void drawDisk32(const Vector3f& pos, float radius, const Color4f& color1, const Color4f& color2);
+    void drawDisk32(const Vector3f& pos, float radius, const Color4f& color);
+    void drawCircle16(const Vector3f& pos, float radius, const Color4f&);
+    void drawCircle32(const Vector3f& pos, float radius, const Color4f&);
+    void drawCylinder16(const Vector3f& pos, float, float, const Color4f&, const Color4f&);
+    void drawCylinder16(const Vector3f& pos, float, float, const Color4f&);
+    void drawCylinder32(const Vector3f& pos, float, float, const Color4f&, const Color4f&);
+    void drawCylinder32(const Vector3f& pos, float , float, const Color4f&);
 
     void drawAxis(const Vector3f&, float);
 

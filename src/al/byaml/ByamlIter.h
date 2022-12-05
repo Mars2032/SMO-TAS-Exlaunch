@@ -6,8 +6,8 @@ namespace al {
 class ByamlIter {
 public:
     ByamlIter();
-    ByamlIter(const char*);
-    ByamlIter(const char*, const char*);
+    ByamlIter(const unsigned char*);
+    ByamlIter(const unsigned char*, const unsigned char*);
 
     bool isValid() const;
     bool isTypeHash() const;

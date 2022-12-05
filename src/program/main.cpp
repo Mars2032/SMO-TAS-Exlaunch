@@ -1,239 +1,245 @@
-#include "lib.hpp"
-#include "patches.hpp"
-#include "nn/err.h"
-#include "logger/Logger.hpp"
+#include "agl/utl.h"
+#include "al/LiveActor/LiveActorFlag.h"
+#include "al/Pad/JoyPadAccelerometerAddon.h"
+#include "al/Pad/PadGyroAddon.h"
+#include "al/actor/LiveActorKit.h"
+#include "al/fs/FileLoader.h"
+#include "al/util.hpp"
+#include "debug-menu/Menu.h"
+#include "filedevice/nin/seadNinSDFileDeviceNin.h"
+#include "filedevice/seadFileDeviceMgr.h"
 #include "fs.h"
-
-#include <basis/seadRawPrint.h>
-#include <prim/seadSafeString.h>
-#include <resource/seadResourceMgr.h>
-#include <filedevice/nin/seadNinSDFileDeviceNin.h>
-#include <filedevice/seadFileDeviceMgr.h>
-#include <filedevice/seadPath.h>
-#include <resource/seadArchiveRes.h>
-#include <framework/seadFramework.h>
-#include <heap/seadHeapMgr.h>
-#include <heap/seadExpHeap.h>
+#include "game/HakoniwaSequence/HakoniwaSequence.h"
+#include "game/StageScene/StageScene.h"
+#include "game/System/Application.h"
+#include "game/System/GameSystem.h"
+#include "gfx/seadPrimitiveRenderer.h"
+#include "lib.hpp"
+#include "logger/Logger.hpp"
+#include "patches.hpp"
+#include "rs/util.hpp"
+#include "smo-tas/TAS.h"
 #include <devenv/seadDebugFontMgrNvn.h>
 #include <gfx/seadTextWriter.h>
 #include <gfx/seadViewport.h>
-
-#include "al/util.hpp"
-#include "game/StageScene/StageScene.h"
-#include "game/System/GameSystem.h"
-#include "game/System/Application.h"
-#include "game/HakoniwaSequence/HakoniwaSequence.h"
-#include "rs/util.hpp"
-
-#include "al/util.hpp"
-#include "al/fs/FileLoader.h"
+#include <heap/seadExpHeap.h>
+#include <heap/seadHeapMgr.h>
 
 static const char *DBG_FONT_PATH   = "DebugData/Font/nvn_font_jis1.ntx";
 static const char *DBG_SHADER_PATH = "DebugData/Font/nvn_font_shader_jis1.bin";
 static const char *DBG_TBL_PATH    = "DebugData/Font/nvn_font_jis1_tbl.bin";
 
-sead::TextWriter *gTextWriter;
+void drawBackground(agl::DrawContext* context) {
+    sead::Vector3<float> p1;  // top left
+    p1.x = -1.0;
+    p1.y = 0.3;
+    p1.z = 0.0;
+    sead::Vector3<float> p2;  // top right
+    p2.x = 0.0;
+    p2.y = 0.3;
+    p2.z = 0.0;
+    sead::Vector3<float> p3;  // bottom left
+    p3.x = -1.0;
+    p3.y = -1.0;
+    p3.z = 0.0;
+    sead::Vector3<float> p4;  // bottom right
+    p4.x = 0.0;
+    p4.y = -1.0;
+    p4.z = 0.0;
 
-void graNoclipCode(al::LiveActor *player) {
+    sead::Color4f c;
+    c.r = 0.1;
+    c.g = 0.1;
+    c.b = 0.1;
+    c.a = 0.75;
 
-    static bool isFirst = true;
-
-    float speed = 25.0f;
-    float speedMax = 150.0f;
-    float vspeed = 20.0f;
-    float speedGain = 0.0f;
-
-    sead::Vector3f *playerPos = al::getTransPtr(player);
-    sead::Vector3f *cameraPos = al::getCameraPos(player, 0);
-    sead::Vector2f *leftStick = al::getLeftStick(-1);
-
-    // Its better to do this here because loading zones reset this.
-    al::offCollide(player);
-    al::setVelocityZero(player);
-
-    // Mario slightly goes down even when velocity is 0. This is a hacky fix for that.
-    playerPos->y += 1.4553f;
-
-    float d = sqrt(al::powerIn(playerPos->x - cameraPos->x, 2) + (al::powerIn(playerPos->z - cameraPos->z, 2)));
-    float vx = ((speed + speedGain)/d)*(playerPos->x - cameraPos->x);
-    float vz = ((speed + speedGain)/d)*(playerPos->z - cameraPos->z);
-
-    if (!al::isPadHoldZR(-1)) {
-        playerPos->x -= leftStick->x * vz;
-        playerPos->z += leftStick->x * vx;
-
-        playerPos->x += leftStick->y * vx;
-        playerPos->z += leftStick->y * vz;
-
-        if (al::isPadHoldX(-1)) speedGain -= 0.5f;
-        if (al::isPadHoldY(-1)) speedGain += 0.5f;
-        if (speedGain <= 0.0f) speedGain = 0.0f;
-        if (speedGain >= speedMax) speedGain = speedMax;
-
-        if (al::isPadHoldZL(-1) || al::isPadHoldA(-1)) playerPos->y -= (vspeed + speedGain/6);
-        if (al::isPadHoldB(-1)) playerPos->y += (vspeed + speedGain/6);
-    }
+    agl::utl::DevTools::beginDrawImm(context, sead::Matrix34<float>::ident,
+                                     sead::Matrix44<float>::ident);
+    agl::utl::DevTools::drawTriangleImm(context, p3, p2, p1, c);
+    agl::utl::DevTools::drawTriangleImm(context, p3, p4, p2, c);
 }
 
-void controlLol(StageScene* scene) {
-    auto actor = rs::getPlayerActor(scene);
-
-    static bool isNoclip = false;
-
-    if(al::isPadTriggerRight(-1)) {
-        isNoclip = !isNoclip;
-
-        if(!isNoclip) {
-            al::onCollide(actor);
+void drawHitSensors(al::LiveActor* actor) {
+    Menu* menu = Menu::instance();
+    if (!menu->isShowSensors) return;
+    sead::PrimitiveRenderer* renderer = sead::PrimitiveRenderer::instance();
+    if (actor->mPoseKeeper && menu->isShowTrans)
+        renderer->drawSphere8x16(al::getTrans(actor), 10, sead::Color4f(0.7922*0.7922,0.0,1.0,1.0));
+    al::HitSensorKeeper* sensorKeeper = actor->mHitSensorKeeper;
+    if (sensorKeeper) {
+        for (int i = 0; i < sensorKeeper->mSensorNum; i++) {
+            al::HitSensor* curSensor = sensorKeeper->mSensors[i];
+            if (curSensor) {
+                if (al::isSensorValid(curSensor)) {
+                    sead::Vector3f sensorTrans = al::getSensorPos(curSensor);
+                    float sensorRadius = al::getSensorRadius(curSensor);
+                    const char* sensorName = curSensor->mName;
+                    sead::Color4f c;
+                    c.r = 0.0;
+                    c.g = 0.0;
+                    c.b = 0.0;
+                    c.a = menu->mSensorAlpha;
+                    if (al::isSensorPlayerAttack(curSensor) || al::isSensorEnemyAttack(curSensor)
+                        || al::isEqualString(sensorName, "Attack")) {
+                        if (!menu->isShowAttack)
+                            c.a = 0.0f;
+                        c.g = 0.5;
+                        c.b = 0.5; // cyan/light blue
+                    } else if (al::isSensorEye(curSensor) || al::isSensorPlayerEye(curSensor)) {
+                        c.b = 1.0; // blue circle
+                        c.a = 0.9;
+                        if (!menu->isShowEyes)
+                            c.a = 0.0f;
+                        renderer->drawCircle32(sensorTrans, sensorRadius, c);
+                        return;
+                    } else if (al::isEqualString("Trample", sensorName)) {
+                        c.a = 0.0;
+                    } else if (al::isSensorNpc(curSensor)) {
+                        if (!menu->isShowNpc) c.a = 0.0f;
+                        c.g = 1.0; // green
+                    } else if (al::isSensorBindableAll(curSensor)) {
+                        if (!menu->isShowBindable)
+                            c.a = 0.0f;
+                        c.r = 0.5;
+                        c.g = 0.5; // yellow
+                    } else if (al::isSensorEnemyBody(curSensor)) {
+                        if (!menu->isShowEnemyBody)
+                            c.a = 0.0f;
+                        c.r = 0.988*0.988;
+                        c.g = 0.549*0.549;
+                        c.b = 0.11*0.11; // orange
+                    } else if (al::isSensorMapObj(curSensor)) {
+                        if (!menu->isShowMapObj) c.a = 0.0f;
+                        c.b = 1.0; // blue
+                    } else if (al::isSensorPlayerAll(curSensor)) {
+                        if (!menu->isShowPlayerAll)
+                            c.a = 0.0;
+                        c.r = 1.0; // red
+                    } else if (al::isSensorHoldObj(curSensor)) {
+                        if (!menu->isShowHoldObj) c.a = 0.0;
+                        c.r = 0.404*0.404;
+                        c.g = 0.051*0.051;
+                        c.b = 0.839*0.839; // purple
+                    } else {
+                        c.r = 1.0;
+                        c.g = 1.0;
+                        c.b = 1.0;
+                        c.a = 0.05;
+                        if (!menu->isShowOther) c.a = 0.0;
+                    }
+                    renderer->drawSphere8x16(sensorTrans, sensorRadius, c);
+                }
+            }
         }
     }
 
-    if(isNoclip) {
-        graNoclipCode(actor);
-    }
 }
 
-HOOK_DEFINE_TRAMPOLINE(ControlHook) {
-    static void Callback(StageScene* scene) {
-        controlLol(scene);
+HOOK_DEFINE_TRAMPOLINE(SceneMovementHook) {
+    static void Callback(al::Scene* scene) {
+        Menu* menu = Menu::instance();
+        TAS* tas = TAS::instance();
+        menu->handleInput();
+        tas->setScene(scene);
+        tas->updateNerve();
         Orig(scene);
     }
 };
 
-HOOK_DEFINE_REPLACE(ReplaceSeadPrint) {
-    static void Callback(const char* format, ...) {
-        va_list args;
-        va_start(args, format);
-        Logger::log(format, args);
-        va_end(args);
+HOOK_DEFINE_TRAMPOLINE(SnapshotHook) {
+    static bool Callback(al::IUseSceneObjHolder const* holder) {
+        Menu* menu = Menu::instance();
+        if (menu->isHandleInputs) return false;
+        return Orig(holder);
+    }
+};
+
+HOOK_DEFINE_TRAMPOLINE(ControlHook) {
+    static void Callback(StageScene* scene) {
+        Orig(scene);
     }
 };
 
 HOOK_DEFINE_TRAMPOLINE(CreateFileDeviceMgr) {
     static void Callback(sead::FileDeviceMgr *thisPtr) {
-        
         Orig(thisPtr);
 
         thisPtr->mMountedSd = nn::fs::MountSdCardForDebug("sd").isSuccess();
-
         sead::NinSDFileDevice *sdFileDevice = new sead::NinSDFileDevice();
-
         thisPtr->mount(sdFileDevice);
-    }
-};
-
-HOOK_DEFINE_TRAMPOLINE(RedirectFileDevice) {
-    static sead::FileDevice *Callback(sead::FileDeviceMgr *thisPtr, sead::SafeString &path, sead::BufferedSafeString *pathNoDrive) {
-
-        sead::FixedSafeString<32> driveName;
-        sead::FileDevice* device;
-
-        // Logger::log("Path: %s\n", path.cstr());
-
-        if (!sead::Path::getDriveName(&driveName, path))
-        {
-            
-            device = thisPtr->findDevice("sd");
-
-            if(!(device && device->isExistFile(path))) {
-
-                device = thisPtr->getDefaultFileDevice();
-
-                if (!device)
-                {
-                    Logger::log("drive name not found and default file device is null\n");
-                    return nullptr;
-                }
-
-            }else {
-                Logger::log("Found File on SD! Path: %s\n", path.cstr());
-            }
-            
-        }
-        else
-            device = thisPtr->findDevice(driveName);
-
-        if (!device)
-            return nullptr;
-
-        if (pathNoDrive != NULL)
-            sead::Path::getPathExceptDrive(pathNoDrive, path);
-
-        return device;
-    }
-};
-
-HOOK_DEFINE_TRAMPOLINE(FileLoaderLoadArc) {
-    static sead::ArchiveRes *Callback(al::FileLoader *thisPtr, sead::SafeString &path, const char *ext, sead::FileDevice *device) {
-
-        // Logger::log("Path: %s\n", path.cstr());
-
-        sead::FileDevice* sdFileDevice = sead::FileDeviceMgr::instance()->findDevice("sd");
-
-        if(sdFileDevice && sdFileDevice->isExistFile(path)) {
-
-            Logger::log("Found File on SD! Path: %s\n", path.cstr());
-
-            device = sdFileDevice;
-        }
-
-        return Orig(thisPtr, path, ext, device);
-    }
-};
-
-HOOK_DEFINE_TRAMPOLINE(FileLoaderIsExistFile) {
-    static bool Callback(al::FileLoader *thisPtr, sead::SafeString &path, sead::FileDevice *device) {
-
-        sead::FileDevice* sdFileDevice = sead::FileDeviceMgr::instance()->findDevice("sd");
-
-        if(sdFileDevice && sdFileDevice->isExistFile(path)) device = sdFileDevice;
-
-        return Orig(thisPtr, path, device);
     }
 };
 
 HOOK_DEFINE_TRAMPOLINE(GameSystemInit) {
     static void Callback(GameSystem *thisPtr) {
-
+        // setup TextWriter
         sead::Heap* curHeap = sead::HeapMgr::instance()->getCurrentHeap();
-
         sead::DebugFontMgrJis1Nvn::createInstance(curHeap);
-
         if (al::isExistFile(DBG_SHADER_PATH) && al::isExistFile(DBG_FONT_PATH) && al::isExistFile(DBG_TBL_PATH)) {
             sead::DebugFontMgrJis1Nvn::sInstance->initialize(curHeap, DBG_SHADER_PATH, DBG_FONT_PATH, DBG_TBL_PATH, 0x100000);
         }
-
         sead::TextWriter::setDefaultFont(sead::DebugFontMgrJis1Nvn::sInstance);
-
         al::GameDrawInfo* drawInfo = Application::instance()->mDrawInfo;
-
         agl::DrawContext *context = drawInfo->mDrawContext;
-        agl::RenderBuffer* renderBuffer = drawInfo->mFirstRenderBuffer;
-
+        agl::RenderBuffer* renderBuffer = drawInfo->getRenderBuffer();
         sead::Viewport* viewport = new sead::Viewport(*renderBuffer);
-
-        gTextWriter = new sead::TextWriter(context, viewport);
-
-        gTextWriter->setupGraphics(context);
-
-        gTextWriter->mColor = sead::Color4f(1.f, 1.f, 1.f, 0.8f);
-
+        sead::TextWriter* textWriter = new sead::TextWriter(context, viewport);
+        textWriter->setupGraphics(context);
+        textWriter->mColor = sead::Color4f(1.f, 1.f, 1.f, 0.8f);
+        // initialize menu
+        Menu* menu = Menu::createInstance(curHeap);
+        menu->init(curHeap, textWriter);
+        // initalize TAS
+        TAS::createInstance(curHeap);
+        // call original function
         Orig(thisPtr);
 
     }
 };
 
 HOOK_DEFINE_TRAMPOLINE(DrawDebugMenu) {
-    static void Callback(HakoniwaSequence *thisPtr) { 
-
+    static void Callback(HakoniwaSequence *thisPtr) {
         Orig(thisPtr);
-        
-        gTextWriter->beginDraw();
 
-        gTextWriter->setCursorFromTopLeft(sead::Vector2f(10.f, 10.f));
-        gTextWriter->printf("FPS: %d\n", static_cast<int>(round(Application::instance()->mFramework->calcFps())));
+        int dispHeight = al::getLayoutDisplayHeight();
+        agl::DrawContext* drawContext = thisPtr->getDrawInfo()->mDrawContext;
+        drawBackground(drawContext);
+        Menu* menu = Menu::instance();
+        al::Scene* curScene = thisPtr->mCurrentScene;
 
-        gTextWriter->endDraw();
+        if (curScene) {
+            sead::LookAtCamera* cam = al::getLookAtCamera(curScene, 0);
+            sead::Projection* proj = al::getProjectionSead(curScene, 0);
+            sead::PrimitiveRenderer* renderer = sead::PrimitiveRenderer::instance();
+            renderer->setDrawContext(drawContext);
+            renderer->setCamera(*cam);
+            renderer->setProjection(*proj);
+            renderer->setModelMatrix(sead::Matrix34f::ident);
+            al::LiveActorGroup* actorGroup = curScene->mLiveActorKit->mLiveActorGroup2;
+            if (actorGroup) {
+                for (int i = 0; i < actorGroup->mActorCount; i++) {
+                    al::LiveActor* curActor = actorGroup->mActors[i];
+                    if (curActor) {
+                        if (!curActor->mLiveActorFlag->mDead && (!curActor->mLiveActorFlag->mClipped || curActor->mLiveActorFlag->mDrawClipped)) {
+                            renderer->begin();
+                            drawHitSensors(curActor);
+                            renderer->end();
+                        }
+                    }
+                }
+            }
+            menu->draw(curScene);
+        }
+
+        menu->mTextWriter->beginDraw();
+
+        menu->mTextWriter->setCursorFromTopLeft(sead::Vector2f(10.f, 10.f));
+        menu->mTextWriter->printf("FPS: %.2f\n", Application::instance()->mFramework->calcFps());
+
+        menu->mTextWriter->setCursorFromTopLeft(sead::Vector2f(10.f, (dispHeight / 3) + 30.f));
+        menu->mTextWriter->setScaleFromFontHeight(20.f);
+
+        menu->mTextWriter->endDraw();
     }
 };
 
@@ -241,27 +247,20 @@ extern "C" void exl_main(void* x0, void* x1) {
     /* Setup hooking enviroment. */
     envSetOwnProcessHandle(exl::util::proc_handle::Get());
     exl::hook::Initialize();
-
     R_ABORT_UNLESS(Logger::instance().init(LOGGER_IP, 3080).value);
-
     runCodePatches();
-
     GameSystemInit::InstallAtOffset(0x535850);
 
-    // SD File Redirection
-
-    RedirectFileDevice::InstallAtOffset(0x76CFE0);
-    FileLoaderLoadArc::InstallAtOffset(0xA5EF64);
-    CreateFileDeviceMgr::InstallAtOffset(0x76C8D4);
-    FileLoaderIsExistFile::InstallAtOffset(0xA5ED28);
-
-    // Sead Debugging Overriding
-
-    ReplaceSeadPrint::InstallAtOffset(0xB59E28);
-
     // Debug Text Writer Drawing
-
     DrawDebugMenu::InstallAtOffset(0x50F1D8);
+
+    // TAS
+    SceneMovementHook::InstallAtSymbol("_ZN2al5Scene8movementEv");
+
+    // File Device Mgr
+    CreateFileDeviceMgr::InstallAtSymbol("_ZN4sead13FileDeviceMgrC1Ev");
+
+    SnapshotHook::InstallAtSymbol("_ZN2rs21isTriggerSnapShotModeEPKN2al18IUseSceneObjHolderE");
 
     ControlHook::InstallAtSymbol("_ZN10StageScene7controlEv");
 

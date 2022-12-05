@@ -4,6 +4,6 @@
 
 class ControllerAppletFunction {
     public:
-        void connectControllerSinglePlay(al::GamePadSystem *);
-        void connectControllerSeparatePlay(al::GamePadSystem *);
+        static void connectControllerSinglePlay(al::GamePadSystem *);
+        static void connectControllerSeparatePlay(al::GamePadSystem *);
 };

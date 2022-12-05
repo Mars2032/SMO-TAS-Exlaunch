@@ -3,10 +3,35 @@
 #include "GameSystemInfo.h"
 #include "al/nerve/NerveExecutor.h"
 
+namespace al {
+    class AudioResourceLoadInfo;
+    class NfpDirector;
+    class ApplicationMessageReceiver;
+    class Sequence;
+    class AccountHolder;
+} // namespace al
+
+class GameConfigData;
+
 class GameSystem : public al::NerveExecutor {
-    public:
-        void init();
-        void *gap;
-        al::GameSystemInfo* mSystemInfo;  // 0x18
-        // 0x78 GameConfigData
+public:
+    al::Sequence* mSequence;
+    al::GameSystemInfo* mGameSystemInfo;
+    al::AudioSystem* mAudioSystem;
+    sead::PtrArray<al::AudioResourceLoadInfo> mAudioResourceLoadInfo;
+    al::AccountHolder* mAccountHolder;
+    al::NetworkSystem* mNetworkSystem;
+    char unk[8];
+    al::HtmlViewer* mHtmlViewer;
+    al::NfpDirector* mNfpDirector;
+    al::GamePadSystem* mGamePadSystem;
+    al::ApplicationMessageReceiver* mApplicationMessageReceiver;
+    al::WaveVibrationHolder* mWaveVibrationHolder;
+    bool unk1;
+    GameConfigData* mGameConfigData;
+    bool unk2;
 };
+
+namespace GameSystemFunction {
+    GameSystem* getGameSystem();
+}

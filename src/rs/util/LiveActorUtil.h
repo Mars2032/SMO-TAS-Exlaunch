@@ -6,4 +6,5 @@ namespace rs
 {
     void initItemByPlacementInfo(al::LiveActor *, al::ActorInitInfo const &, bool);
     float setShadowDropLength(al::LiveActor *,al::ActorInitInfo const&,char const*);
+    bool isSeparatePlay(al::IUseSceneObjHolder const*);
 } // namespace rs

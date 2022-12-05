@@ -3,6 +3,7 @@
 #include "sead/math/seadVector.h"
 
 namespace al {
+
     bool isPadTriggerUp(int port);
     bool isPadTriggerDown(int port);
     bool isPadTriggerLeft(int port);
@@ -35,6 +36,4 @@ namespace al {
     bool isPadHoldZL(int port);
     bool isPadHoldZR(int port);
 
-    sead::Vector2f *getLeftStick(int);
-    sead::Vector2f *getRightStick(int);
 }
