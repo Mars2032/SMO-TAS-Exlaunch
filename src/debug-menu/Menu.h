@@ -1,11 +1,12 @@
 #pragma once
 
-#include "debug-menu/PageBase.h"
-#include "debug-menu/PageMain.h"
-#include "debug-menu/PageOptions.h"
 #include "debug-menu/PageAbout.h"
-#include "debug-menu/PageTAS.h"
+#include "debug-menu/PageBase.h"
+#include "debug-menu/PageHitSensor.h"
 #include "debug-menu/PageInfo.h"
+#include "debug-menu/PageMain.h"
+#include "debug-menu/PageTAS.h"
+#include "debug-menu/PageOptions.h"
 
 struct Menu {
     SEAD_SINGLETON_DISPOSER(Menu);
@@ -32,6 +33,7 @@ public:
     PageTAS* mPageTAS = nullptr;
     PageInfo* mPageInfo = nullptr;
     PageAbout* mPageAbout = nullptr;
+    PageHitSensor* mPageHitSensor = nullptr;
     PageOptions* mPageOptions = nullptr;
     PageBase* mCurPage = nullptr;
     int mCursorIndex = 0;

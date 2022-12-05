@@ -11,6 +11,8 @@ void Menu::init(sead::Heap* heap, sead::TextWriter* textWriter) {
     mPageMain->init();
     mPageOptions = new PageOptions(heap);
     mPageOptions->init();
+    mPageHitSensor = new PageHitSensor(heap);
+    mPageHitSensor->init();
     mPageInfo = new PageInfo(heap);
     mPageInfo->init();
     mPageTAS = new PageTAS(heap);
