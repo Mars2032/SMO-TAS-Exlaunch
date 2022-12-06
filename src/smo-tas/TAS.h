@@ -14,11 +14,13 @@ public:
     void applyFrame(Frame& frame);
     void exeUpdate();
     void exeWait();
+    void exeWaitUpdate();
     bool isRunning();
     void setScene(al::Scene* scene) { mScene = scene; };
-    const char* getScriptName() { return mScriptName; };
+    al::Scene* getScene() const { return mScene; };
+    const char* getScriptName() const { return mScriptName.cstr(); };
 private:
-    const char* mScriptName;
+    sead::FixedSafeString<0x80> mScriptName;
     int mFrameIndex = 0;
     u32 mPrevButtons[2];
     Script* mScript;

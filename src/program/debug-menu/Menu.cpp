@@ -19,6 +19,8 @@ void Menu::init(sead::Heap* heap, sead::TextWriter* textWriter) {
     mPageTAS->init();
     mPageAbout = new PageAbout(heap);
     mPageAbout->init();
+    mPageDebug = new PageDebug(heap);
+    mPageDebug->init();
     mCurPage = mPageMain;
     mTextWriter = textWriter;
 }
@@ -42,10 +44,18 @@ void Menu::draw(al::Scene* scene) {
 }
 
 void Menu::handleInput() {
+    int padInputs = 0;
+    padInputs |= al::isPadHoldUp(-1) << 0;
+    padInputs |= al::isPadHoldDown(-1) << 1;
+    padInputs |= al::isPadHoldLeft(-1) << 2;
+    padInputs |= al::isPadHoldRight(-1) << 3;
+    mCurPadInputs = padInputs & ~mPrevPadInputs;
+    mPrevPadInputs = padInputs;
+
     int lines = mCurPage->mCursorPositions.size();
     if (isHandleInputs) {
-        if (al::isPadTriggerUp(-1)) mCursorIndex--;
-        if (al::isPadTriggerDown(-1)) mCursorIndex++;
+        if (isTriggerUp()) mCursorIndex--;
+        if (isTriggerDown()) mCursorIndex++;
         if (mCursorIndex < 0) mCursorIndex = lines - 1;
         if (mCursorIndex >= lines) mCursorIndex = 0;
         mCurPage->handleInput(mCursorIndex);

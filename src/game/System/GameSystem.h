@@ -4,28 +4,28 @@
 #include "al/nerve/NerveExecutor.h"
 
 namespace al {
-    class AudioResourceLoadInfo;
     class NfpDirector;
     class ApplicationMessageReceiver;
     class Sequence;
     class AccountHolder;
+    class AudioInfoListWithParts;
 } // namespace al
 
 class GameConfigData;
 
 class GameSystem : public al::NerveExecutor {
 public:
-    al::Sequence* mSequence;
-    al::GameSystemInfo* mGameSystemInfo;
-    al::AudioSystem* mAudioSystem;
-    sead::PtrArray<al::AudioResourceLoadInfo> mAudioResourceLoadInfo;
-    al::AccountHolder* mAccountHolder;
-    al::NetworkSystem* mNetworkSystem;
+    al::Sequence* mSequence; // 0x10
+    al::GameSystemInfo* mGameSystemInfo; // 0x18
+    al::AudioSystem* mAudioSystem; // 0x20
+    al::AudioInfoListWithParts* mAudioInfoListWithParts; // 0x28
+    al::AccountHolder* mAccountHolder; // 0x30
+    al::NetworkSystem* mNetworkSystem; // 0x38
     char unk[8];
     al::HtmlViewer* mHtmlViewer;
     al::NfpDirector* mNfpDirector;
-    al::GamePadSystem* mGamePadSystem;
-    al::ApplicationMessageReceiver* mApplicationMessageReceiver;
+    al::GamePadSystem* mGamePadSystem; // 0x58
+    al::ApplicationMessageReceiver* mApplicationMessageReceiver; // 0x60
     al::WaveVibrationHolder* mWaveVibrationHolder;
     bool unk1;
     GameConfigData* mGameConfigData;

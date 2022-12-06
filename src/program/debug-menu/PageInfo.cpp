@@ -14,8 +14,8 @@ void PageInfo::init() {
 }
 
 void PageInfo::handleInput(int cursorIndex) {
-    if (!al::isPadTriggerRight(-1)) return;
     Menu* menu = Menu::instance();
+    if (!menu->isTriggerRight()) return;
     switch (cursorIndex) {
     case 0:
         menu->setCurPage(menu->mPageMain);

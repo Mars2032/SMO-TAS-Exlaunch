@@ -48,8 +48,8 @@ void PageTAS::updateDir() {
 }
 
 void PageTAS::handleInput(int cursorIndex) {
-    if (!al::isPadTriggerRight(-1)) return;
     Menu* menu = Menu::instance();
+    if (!menu->isTriggerRight()) return;
     TAS* tas = TAS::instance();
     if (cursorIndex == 0) {
         if (tas->getScriptName())

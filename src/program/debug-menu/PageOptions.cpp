@@ -2,15 +2,15 @@
 #include "smo-tas/TAS.h"
 
 void PageOptions::init() {
-    addSelectableLine(2);
-    addSelectableLine(3);
     addSelectableLine(4);
+    addSelectableLine(5);
+    addSelectableLine(6);
     addSelectableLine(21);
 }
 
 void PageOptions::handleInput(int cursorIndex) {
-    if (!al::isPadTriggerRight(-1)) return;
     Menu* menu = Menu::instance();
+    if (!menu->isTriggerRight()) return;
     switch(cursorIndex) {
         case 0:
             menu->mCurPage = menu->mPageHitSensor;
@@ -34,6 +34,7 @@ void PageOptions::draw(al::Scene* scene, sead::TextWriter* textWriter) {
     c = {1.0, 1.0, 1.0, 1.0};
     textWriter->setColor(c);
     textWriter->printf("Options\n\n");
+    textWriter->printf("Please note that changing any options WILL save the game.\n\n");
     textWriter->printf("  HitSensor Options\n  Collider Options\n  AreaObj Options\n");
     textWriter->setCursorFromTopLeft(sead::Vector2f(20.f, 690.f));
     textWriter->printf("Return to Main     %s", menu->isHandleInputs ? "" : "[MENU DISABLED]");

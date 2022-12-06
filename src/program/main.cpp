@@ -3,6 +3,7 @@
 #include "al/Pad/JoyPadAccelerometerAddon.h"
 #include "al/Pad/PadGyroAddon.h"
 #include "al/actor/LiveActorKit.h"
+#include "al/byaml/writer/ByamlWriter.h"
 #include "al/fs/FileLoader.h"
 #include "al/util.hpp"
 #include "debug-menu/Menu.h"
@@ -135,6 +136,44 @@ void drawHitSensors(al::LiveActor* actor) {
 
 }
 
+HOOK_DEFINE_TRAMPOLINE(DataReadHook) {
+    static void Callback(void* thisPtr, const al::ByamlIter& iter) {
+        Orig(thisPtr, iter);
+        auto* menu =  Menu::instance();
+        al::tryGetByamlBool(&menu->isShowSensors, iter, "ShowSensors");
+        al::tryGetByamlBool(&menu->isShowAttack, iter, "ShowAttack");
+        al::tryGetByamlBool(&menu->isShowBindable, iter, "ShowBindable");
+        al::tryGetByamlBool(&menu->isShowEnemyBody, iter, "ShowEnemyBody");
+        al::tryGetByamlBool(&menu->isShowEyes, iter, "ShowEyes");
+        al::tryGetByamlBool(&menu->isShowHoldObj, iter, "ShowHoldObj");
+        al::tryGetByamlBool(&menu->isShowMapObj, iter, "ShowMapObj");
+        al::tryGetByamlBool(&menu->isShowNpc, iter, "ShowNpc");
+        al::tryGetByamlBool(&menu->isShowOther, iter, "ShowOther");
+        al::tryGetByamlBool(&menu->isShowPlayerAll, iter, "ShowPlayerAll");
+        al::tryGetByamlBool(&menu->isShowTrans, iter, "ShowTrans");
+        al::tryGetByamlF32(&menu->mSensorAlpha, iter, "SensorAlpha");
+    }
+};
+
+HOOK_DEFINE_TRAMPOLINE(DataWriteHook) {
+    static void Callback(void* thisPtr, al::ByamlWriter* writer) {
+        Orig(thisPtr, writer);
+        auto* menu =  Menu::instance();
+        writer->addBool("ShowSensors", menu->isShowSensors);
+        writer->addBool("ShowAttack", menu->isShowAttack);
+        writer->addBool("ShowBindable", menu->isShowBindable);
+        writer->addBool("ShowEnemyBody", menu->isShowEnemyBody);
+        writer->addBool("ShowEyes", menu->isShowEyes);
+        writer->addBool("ShowHoldObj", menu->isShowHoldObj);
+        writer->addBool("ShowMapObj", menu->isShowMapObj);
+        writer->addBool("ShowNpc", menu->isShowNpc);
+        writer->addBool("ShowOther", menu->isShowOther);
+        writer->addBool("ShowPlayerAll", menu->isShowPlayerAll);
+        writer->addBool("ShowTrans", menu->isShowTrans);
+        writer->addFloat("SensorAlpha", menu->mSensorAlpha);
+    }
+};
+
 HOOK_DEFINE_TRAMPOLINE(SceneMovementHook) {
     static void Callback(al::Scene* scene) {
         Menu* menu = Menu::instance();
@@ -259,6 +298,10 @@ extern "C" void exl_main(void* x0, void* x1) {
 
     // File Device Mgr
     CreateFileDeviceMgr::InstallAtSymbol("_ZN4sead13FileDeviceMgrC1Ev");
+
+    // Save file read/write
+    DataReadHook::InstallAtSymbol("_ZN14GameConfigData4readERKN2al9ByamlIterE");
+    DataWriteHook::InstallAtSymbol("_ZN14GameConfigData5writeEPN2al11ByamlWriterE");
 
     SnapshotHook::InstallAtSymbol("_ZN2rs21isTriggerSnapShotModeEPKN2al18IUseSceneObjHolderE");
 

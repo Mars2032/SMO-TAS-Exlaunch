@@ -7,6 +7,7 @@
 #include "debug-menu/PageMain.h"
 #include "debug-menu/PageTAS.h"
 #include "debug-menu/PageOptions.h"
+#include "debug-menu/PageDebug.h"
 
 struct Menu {
     SEAD_SINGLETON_DISPOSER(Menu);
@@ -35,8 +36,17 @@ public:
     PageAbout* mPageAbout = nullptr;
     PageHitSensor* mPageHitSensor = nullptr;
     PageOptions* mPageOptions = nullptr;
+    PageDebug* mPageDebug = nullptr;
     PageBase* mCurPage = nullptr;
     int mCursorIndex = 0;
     float mSensorAlpha = 0.15;
     sead::TextWriter* mTextWriter = nullptr;
+
+    bool isTriggerUp() const { return mCurPadInputs & 1; }
+    bool isTriggerDown() const { return mCurPadInputs & 2; }
+    bool isTriggerLeft() const { return mCurPadInputs & 4; }
+    bool isTriggerRight() const { return mCurPadInputs & 8; }
+private:
+    u8 mPrevPadInputs = 0;
+    u8 mCurPadInputs = 0;
 };

@@ -1,5 +1,3 @@
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "NotImplementedFunctions"
 #pragma once
 
 #include "math/seadVector.h"
@@ -14,18 +12,10 @@ public:
     bool calc() override;
     bool tryUpdateGyroStatus();
     void getPose(sead::Vector3f* roll, sead::Vector3f* pitch, sead::Vector3f* yaw);
-    void setPose(sead::Vector3f const& roll, sead::Vector3f const& pitch, sead::Vector3f const& yaw)
-                {
-        mAcceleration = roll;
-        mAngularVel = pitch;
-        mAngle = yaw; };
 public:
     char _padding[0x4];
-    sead::Vector3f mAcceleration;
-    sead::Vector3f mAngularVel;
-    sead::Vector3f mAngle;
+    sead::Matrix33f mDirection; // 0x2C
+    sead::Vector3f mAngularVel; // 0x50
 };
 
 }
-
-#pragma clang diagnostic pop

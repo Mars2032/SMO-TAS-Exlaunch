@@ -1,5 +1,6 @@
 #include "al/util/MathUtil.h"
 #include "debug-menu/Menu.h"
+#include "game/GameData/SaveDataAccessFunction.h"
 #include "smo-tas/TAS.h"
 
 void PageHitSensor::init() {
@@ -20,8 +21,10 @@ void PageHitSensor::init() {
 }
 
 void PageHitSensor::handleInput(int cursorIndex) {
-    if (!al::isPadTriggerRight(-1) && !al::isPadTriggerLeft(-1)) return;
     Menu* menu = Menu::instance();
+    if (!menu->isTriggerRight() && !menu->isTriggerLeft()) return;
+    auto* tas = TAS::instance();
+    GameDataHolderAccessor accessor(tas->getScene());
     switch (cursorIndex) {
     case 0:
         menu->isShowSensors = !menu->isShowSensors;
@@ -54,18 +57,24 @@ void PageHitSensor::handleInput(int cursorIndex) {
         menu->isShowOther = !menu->isShowOther;
         break;
     case 10:
-        if (al::isPadTriggerLeft(-1)) menu->mSensorAlpha -= 0.05;
-        if (al::isPadTriggerRight(-1)) menu->mSensorAlpha += 0.05;
+        if (menu->isTriggerLeft()) menu->mSensorAlpha -= 0.05;
+        if (menu->isTriggerRight()) menu->mSensorAlpha += 0.05;
         menu->mSensorAlpha = al::clamp(menu->mSensorAlpha, 0.00f, 1.00f);
         break;
     case 11:
         menu->isShowTrans = !menu->isShowTrans;
         break;
     case 12:
-        menu->setCurPage(menu->mPageOptions);
+        if (menu->isTriggerRight()) {
+            menu->setCurPage(menu->mPageOptions);
+            SaveDataAccessFunction::startSaveDataWriteSync(accessor.mData);
+        }
         break;
     case 13:
-        menu->setCurPage(menu->mPageMain);
+        if (menu->isTriggerRight()) {
+            menu->setCurPage(menu->mPageMain);
+            SaveDataAccessFunction::startSaveDataWriteSync(accessor.mData);
+        }
         break;
     default:
         break;
@@ -106,9 +115,9 @@ void PageHitSensor::draw(al::Scene* scene, sead::TextWriter* textWriter) {
     textWriter->setColor(c);
     textWriter->printf("  Show Other Sensors:            %s\n", menu->isShowOther ? "Enabled" : "Disabled");
     textWriter->printf("  Alpha:  %s  %.2f  %s\n",
-                       (menu->mCursorIndex == 10) ? (al::isPadTriggerLeft(-1) ? "< " : " <") : ("  "),
+                       (menu->mCursorIndex == 10) ? (menu->isTriggerLeft() ? "< " : " <") : ("  "),
                        menu->mSensorAlpha,
-                       (menu->mCursorIndex == 10) ? (al::isPadTriggerRight(-1) ? "  >" : "> ") : ("  "));
+                       (menu->mCursorIndex == 10) ? (menu->isTriggerRight() ? "  >" : "> ") : ("  "));
     c = {0.7922, 0.0, 1.0, 1.0};
     textWriter->setColor(c);
     textWriter->printf("Show Actor Positions:            %s\n", menu->isShowTrans ? "Enabled" : "Disabled");
