@@ -246,23 +246,27 @@ HOOK_DEFINE_TRAMPOLINE(DrawDebugMenu) {
         Menu* menu = Menu::instance();
         al::Scene* curScene = thisPtr->mCurrentScene;
 
-        if (curScene) {
-            sead::LookAtCamera* cam = al::getLookAtCamera(curScene, 0);
-            sead::Projection* proj = al::getProjectionSead(curScene, 0);
-            sead::PrimitiveRenderer* renderer = sead::PrimitiveRenderer::instance();
-            renderer->setDrawContext(drawContext);
-            renderer->setCamera(*cam);
-            renderer->setProjection(*proj);
-            renderer->setModelMatrix(sead::Matrix34f::ident);
-            al::LiveActorGroup* actorGroup = curScene->mLiveActorKit->mLiveActorGroup2;
-            if (actorGroup) {
-                for (int i = 0; i < actorGroup->mActorCount; i++) {
-                    al::LiveActor* curActor = actorGroup->mActors[i];
-                    if (curActor) {
-                        if (!curActor->mLiveActorFlag->mDead && (!curActor->mLiveActorFlag->mClipped || curActor->mLiveActorFlag->mDrawClipped)) {
-                            renderer->begin();
-                            drawHitSensors(curActor);
-                            renderer->end();
+        // Only runs if scene exists and HakoniwaSequence nerve doesn't contain Destroy
+        if (curScene && !strstr(typeid(*al::getCurrentNerve(thisPtr)).name(), "Destroy")) {
+            if (curScene->mLiveActorKit) {
+                const sead::LookAtCamera* cam = al::getLookAtCamera(curScene, 0);
+                const sead::Projection* proj = al::getProjectionSead(curScene, 0);
+                sead::PrimitiveRenderer* renderer = sead::PrimitiveRenderer::instance();
+                renderer->setDrawContext(drawContext);
+                renderer->setCamera(*cam);
+                renderer->setProjection(*proj);
+                renderer->setModelMatrix(sead::Matrix34f::ident);
+                al::LiveActorGroup* actorGroup = curScene->mLiveActorKit->mLiveActorGroup2;
+                if (actorGroup) {
+                    for (int i = 0; i < actorGroup->mActorCount; i++) {
+                        al::LiveActor* curActor = actorGroup->mActors[i];
+                        if (curActor) {
+                            if (!curActor->mLiveActorFlag->mDead &&
+                                (!curActor->mLiveActorFlag->mClipped || curActor->mLiveActorFlag->mDrawClipped)) {
+                                renderer->begin();
+                                drawHitSensors(curActor);
+                                renderer->end();
+                            }
                         }
                     }
                 }

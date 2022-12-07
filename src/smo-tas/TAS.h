@@ -15,6 +15,7 @@ public:
     void exeUpdate();
     void exeWait();
     void exeWaitUpdate();
+    void exeRecord();
     bool isRunning();
     void setScene(al::Scene* scene) { mScene = scene; };
     al::Scene* getScene() const { return mScene; };

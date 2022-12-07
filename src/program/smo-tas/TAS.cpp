@@ -9,11 +9,13 @@
 #include "game/System/GameSystem.h"
 #include "rs/util/LiveActorUtil.h"
 #include "sead/basis/seadNew.h"
+#include "al/Pad/NpadController.h"
 
 namespace {
     NERVE_DEF(TAS, Update);
     NERVE_DEF(TAS, Wait);
     NERVE_DEF(TAS, WaitUpdate);
+    NERVE_DEF(TAS, Record);
 }
 
 SEAD_SINGLETON_DISPOSER_IMPL(TAS);
@@ -84,7 +86,8 @@ void TAS::endScript() {
 
 void TAS::applyFrame(Frame& frame) {
     sead::ControllerMgr* controllerMgr = sead::ControllerMgr::instance();
-    sead::Controller* controller = controllerMgr->getController(al::getPlayerControllerPort(frame.secondPlayer));
+    auto* controller = (al::NpadController*)controllerMgr->getController(al::getPlayerControllerPort(frame.secondPlayer));
+    controller->mPadAccelerationDeviceNum = 2; // number of accelerometers for joycons
     auto* accelLeft = (al::JoyPadAccelerometerAddon*)controller->getAddonByOrder(sead::ControllerDefine::cAccel, 0);
     auto* accelRight = (al::JoyPadAccelerometerAddon*)controller->getAddonByOrder(sead::ControllerDefine::cAccel, 1);
     auto* gyroLeft = (al::PadGyroAddon*)controller->getAddonByOrder(sead::ControllerDefine::cGyro, 0);
@@ -150,6 +153,10 @@ void TAS::exeWait() {
 
 void TAS::exeWaitUpdate() {
     al::setNerve(this, &nrvTASUpdate);
+}
+
+void TAS::exeRecord() {
+
 }
 
 bool TAS::isRunning() {

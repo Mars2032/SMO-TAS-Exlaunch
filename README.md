@@ -15,6 +15,9 @@ longer due to the amount of variability in controller inputs per frame. There ar
 also plans to create a script converter from the old format to the new format.
 
 ### Format Changes
+
+**THIS IS ALL SUBJECT TO CHANGE**
+
 First and foremost, it's important to know that scripts will be read by the game
 if they are in a binary format. This makes it very easy to separate the different
 kinds of inputs we have.
@@ -32,8 +35,7 @@ Then, the metadata line contains the following:
 With the change of making 2 Player mode read from the same script, 
 each player line will need to be next to each other. As such, the format becomes as follows:
 
-`<frameNo> <isPlayerTwo> <buttons> <lStick> <rStick> <leftAccel> <rightAccel> 
-<leftGyroAccel> <leftAngularV> <leftAngle> <rightGyroAccel> <rightAngularV> <rightAngle>`
+`<frameNo> <isPlayerTwo> <buttons> <lStick> <rStick> <leftGyro> <leftAngularV> <rightGyro> <rightAngularV>`
 
 where
 - `<frameNo>` is a `u32`
@@ -43,7 +45,10 @@ where
 - `<rStick>` is a `Vector2f`
 - `<leftAccel>` is a trio of `float`s (`Vector3f`)
 - `<rightAccel>` is a `Vector3f`
-- `<leftGyroAccel>` is a `Vector3f`
+- `<leftGyro>` is a `Matrix33f`
+- `<leftAngularV>` is a `Vector3f`
+- `<rightGyro>` is a `Matrix33f`
+- `<rightAngularV>` is a `Vector3f`
 
 
 ## Notes
