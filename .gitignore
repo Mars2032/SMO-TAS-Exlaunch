@@ -35,4 +35,3 @@ build/
 *.out
 *.app
 .idea/
-CMakeLists.txt
