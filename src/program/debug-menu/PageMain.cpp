@@ -11,6 +11,7 @@ void PageMain::init() {
 
 void PageMain::handleInput(int cursorIndex) {
     Menu* menu = Menu::instance();
+    TAS* tas = TAS::instance();
     if (!menu->isTriggerRight()) return;
     switch (cursorIndex) {
     case 0:
@@ -21,6 +22,7 @@ void PageMain::handleInput(int cursorIndex) {
         break;
     case 2:
         menu->setCurPage(menu->mPageTAS);
+        tas->updateDir();
         break;
     case 3:
         menu->setCurPage(menu->mPageAbout);
@@ -44,5 +46,7 @@ void PageMain::draw(al::Scene* scene, sead::TextWriter* textWriter) {
     textWriter->printf("Options\nInfo\nTAS\nAbout\nDebug\n");
     textWriter->setCursorFromTopLeft(sead::Vector2f(20.f, 690.f));
     textWriter->printf("                   %s", menu->isHandleInputs ? "" : "[MENU DISABLED]");
-    textWriter->printf("  %s\n", tas->isRunning() ? "[TAS RUNNING]" : "");
+    if (tas->isRunning()) {
+        textWriter->printf("[TAS RUNNING %d/%d]", tas->getFrameIndex(), tas->getFrameCount());
+    }
 }

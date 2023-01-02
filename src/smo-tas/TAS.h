@@ -8,7 +8,7 @@ class TAS : public al::NerveExecutor {
     TAS();
     ~TAS();
 public:
-    bool tryLoadScript(nn::fs::DirectoryEntry& entry);
+    bool tryLoadScript();
     void startScript();
     void endScript();
     void applyFrame(Frame& frame);
@@ -20,6 +20,18 @@ public:
     void setScene(al::Scene* scene) { mScene = scene; };
     al::Scene* getScene() const { return mScene; };
     const char* getScriptName() const { return mScriptName.cstr(); };
+    int getFrameIndex();
+    int getFrameCount();
+    sead::Vector3f getStartPosition();
+    bool hasScript();
+
+    void updateDir();
+    bool refreshCurrentScriptEntry();
+    bool tryStartScript();
+    nn::fs::DirectoryEntry* mEntries = nullptr;
+    s64 mEntryCount;
+    nn::fs::DirectoryEntry currentScriptEntry;
+    nn::fs::DirectoryEntry oldScriptEntry;
 private:
     sead::FixedSafeString<0x80> mScriptName;
     int mFrameIndex = 0;

@@ -5,7 +5,8 @@
 #include "smo-tas/TAS.h"
 
 void PageTAS::init() {
-    updateDir();
+    //TAS* tas = TAS::instance();
+    //tas->updateDir();
     addSelectableLine(2);
     addSelectableLine(3);
     addSelectableLine(5);
@@ -23,28 +24,7 @@ void PageTAS::init() {
     addSelectableLine(18);
     addSelectableLine(19);
     addSelectableLine(21);
-}
-
-void PageTAS::updateDir() {
-    nn::fs::DirectoryHandle handle;
-    nn::Result r = nn::fs::OpenDirectory(&handle, "sd:/scripts", nn::fs::OpenDirectoryMode_File);
-    if (R_FAILED(r)) return;
-    s64 entryCount;
-    r = nn::fs::GetDirectoryEntryCount(&entryCount, handle);
-    if (R_FAILED(r)) {
-        nn::fs::CloseDirectory(handle);
-        return;
-    }
-    nn::fs::DirectoryEntry* entryBuffer = new nn::fs::DirectoryEntry[entryCount];
-    r = nn::fs::ReadDirectory(&entryCount, entryBuffer, handle, entryCount);
-    nn::fs::CloseDirectory(handle);
-    if (R_FAILED(r)) {
-        delete[] entryBuffer;
-        return;
-    }
-    delete[] mEntries;
-    mEntries = entryBuffer;
-    mEntryCount = entryCount;
+    //currentScriptEntry.m_Name = "";
 }
 
 void PageTAS::handleInput(int cursorIndex) {
@@ -52,21 +32,21 @@ void PageTAS::handleInput(int cursorIndex) {
     if (!menu->isTriggerRight()) return;
     TAS* tas = TAS::instance();
     if (cursorIndex == 0) {
-        if (tas->getScriptName())
-            tas->startScript();
+        tas->tryStartScript();
     }
     if (cursorIndex == 1) {
         tas->endScript();
     }
     if (cursorIndex == 2) {
-        updateDir();
+        tas->updateDir();
     }
     if (cursorIndex == 16) {
         menu->setCurPage(menu->mPageMain);
     }
-    for (int i = 0; i < mEntryCount; i++) {
+    for (int i = 0; i < tas->mEntryCount; i++) {
         if (cursorIndex == i+3) {
-            tas->tryLoadScript(mEntries[i]);
+            tas->currentScriptEntry = tas->mEntries[i];
+            tas->tryLoadScript();
         }
     }
 }
@@ -75,19 +55,28 @@ void PageTAS::handleInput(int cursorIndex) {
 void PageTAS::draw(al::Scene* scene, sead::TextWriter* textWriter) {
     Menu* menu = Menu::instance();
     TAS* tas = TAS::instance();
-    textWriter->printf("TAS\n\n");
+    textWriter->printf("TAS\n");
+    if (tas->hasScript()) {
+        textWriter->printf("Initial Coordinates:  (X: %.3f  Y: %.3f  Z: %.3f)\n", tas->getStartPosition().x,
+                           tas->getStartPosition().y, tas->getStartPosition().z);
+    }
+    else {
+        textWriter->printf("\n");
+    }
     textWriter->printf("Start Script %s\n", tas->getScriptName());
     textWriter->printf("End Script\n\n");
     textWriter->printf("Refresh Directory\n");
     textWriter->printf("Scripts (located in sd:/scripts/):\n");
-    if (!mEntries)  {
+    if (!tas->mEntries)  {
         textWriter->printf("  No scripts.\n");
     } else {
-        for (int i = 0; i < mEntryCount; i++) {
-            textWriter->printf("  %s\n", mEntries[i].m_Name);
+        for (int i = 0; i < tas->mEntryCount; i++) {
+            textWriter->printf("  %s\n", tas->mEntries[i].m_Name);
         }
     }
     textWriter->setCursorFromTopLeft(sead::Vector2f(20.f, 690.f));
     textWriter->printf("Return to Main     %s", menu->isHandleInputs ? "" : "[MENU DISABLED]");
-    textWriter->printf("  %s\n", tas->isRunning() ? "[TAS RUNNING]" : "");
+    if (tas->isRunning()) {
+        textWriter->printf("[TAS RUNNING %d/%d]", tas->getFrameIndex(), tas->getFrameCount());
+    }
 }

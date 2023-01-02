@@ -29,5 +29,6 @@ struct Script {
     s32 mScenarioNo;
     char mChangeStageName[0x80];
     char mChangeStageId[0x80];
+    sead::Vector3f mStartPosition;
     Frame mFrames[];
 };

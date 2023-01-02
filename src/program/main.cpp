@@ -240,11 +240,15 @@ HOOK_DEFINE_TRAMPOLINE(DrawDebugMenu) {
     static void Callback(HakoniwaSequence *thisPtr) {
         Orig(thisPtr);
 
+        al::Scene* curScene = thisPtr->mCurrentScene;
+        Menu* menu = Menu::instance();
+
         int dispHeight = al::getLayoutDisplayHeight();
         agl::DrawContext* drawContext = thisPtr->getDrawInfo()->mDrawContext;
-        drawBackground(drawContext);
-        Menu* menu = Menu::instance();
-        al::Scene* curScene = thisPtr->mCurrentScene;
+        if (menu->isHandleInputs) {
+            drawBackground(drawContext);
+        }
+
 
         // Only runs if scene exists and HakoniwaSequence nerve doesn't contain Destroy
         if (curScene && !strstr(typeid(*al::getCurrentNerve(thisPtr)).name(), "Destroy")) {
@@ -271,18 +275,22 @@ HOOK_DEFINE_TRAMPOLINE(DrawDebugMenu) {
                     }
                 }
             }
-            menu->draw(curScene);
+            if (menu->isHandleInputs) {
+                menu->draw(curScene);
+            }
         }
 
-        menu->mTextWriter->beginDraw();
+        if (menu->isHandleInputs) {
+            menu->mTextWriter->beginDraw();
 
-        menu->mTextWriter->setCursorFromTopLeft(sead::Vector2f(10.f, 10.f));
-        menu->mTextWriter->printf("FPS: %.2f\n", Application::instance()->mFramework->calcFps());
+            menu->mTextWriter->setCursorFromTopLeft(sead::Vector2f(10.f, 10.f));
+            menu->mTextWriter->printf("FPS: %.2f\n", Application::instance()->mFramework->calcFps());
 
-        menu->mTextWriter->setCursorFromTopLeft(sead::Vector2f(10.f, (dispHeight / 3) + 30.f));
-        menu->mTextWriter->setScaleFromFontHeight(20.f);
+            menu->mTextWriter->setCursorFromTopLeft(sead::Vector2f(10.f, (dispHeight / 3) + 30.f));
+            menu->mTextWriter->setScaleFromFontHeight(20.f);
 
-        menu->mTextWriter->endDraw();
+            menu->mTextWriter->endDraw();
+        }
     }
 };
 
@@ -290,7 +298,7 @@ extern "C" void exl_main(void* x0, void* x1) {
     /* Setup hooking enviroment. */
     envSetOwnProcessHandle(exl::util::proc_handle::Get());
     exl::hook::Initialize();
-    R_ABORT_UNLESS(Logger::instance().init(LOGGER_IP, 3080).value);
+    //R_ABORT_UNLESS(Logger::instance().init(LOGGER_IP, 3080).value);
     runCodePatches();
     GameSystemInit::InstallAtOffset(0x535850);
 

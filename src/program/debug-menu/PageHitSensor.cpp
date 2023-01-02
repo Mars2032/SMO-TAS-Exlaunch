@@ -126,5 +126,7 @@ void PageHitSensor::draw(al::Scene* scene, sead::TextWriter* textWriter) {
     textWriter->setColor(c);
     textWriter->printf("Return to Options\n");
     textWriter->printf("Return to Main     %s", menu->isHandleInputs ? "" : "[MENU DISABLED]");
-    textWriter->printf("  %s\n", tas->isRunning() ? "[TAS RUNNING]" : "");
+    if (tas->isRunning()) {
+        textWriter->printf("[TAS RUNNING %d/%d]", tas->getFrameIndex(), tas->getFrameCount());
+    }
 }

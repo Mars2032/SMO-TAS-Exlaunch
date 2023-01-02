@@ -10,14 +10,19 @@
                             }
 
 void PageInfo::init() {
+    addSelectableLine(2);
     addSelectableLine(21);
 }
 
 void PageInfo::handleInput(int cursorIndex) {
     Menu* menu = Menu::instance();
+    TAS* tas = TAS::instance();
     if (!menu->isTriggerRight()) return;
     switch (cursorIndex) {
     case 0:
+        tas->tryStartScript();
+        break;
+    case 1:
         menu->setCurPage(menu->mPageMain);
         break;
     default:
@@ -27,12 +32,15 @@ void PageInfo::handleInput(int cursorIndex) {
 
 void PageInfo::draw(al::Scene* scene, sead::TextWriter* textWriter) {
     Menu* menu = Menu::instance();
-    auto* tas = TAS::instance();
+    TAS* tas = TAS::instance();
     textWriter->setCursorFromTopLeft(sead::Vector2f(20.f, 690.f));
     textWriter->printf("Return to Main     %s", menu->isHandleInputs ? "" : "[MENU DISABLED]");
-    textWriter->printf("  %s\n", tas->isRunning() ? "[TAS RUNNING]" : "");
+    if (tas->isRunning()) {
+        textWriter->printf("[TAS RUNNING %d/%d]", tas->getFrameIndex(), tas->getFrameCount());
+    }
     textWriter->setCursorFromTopLeft(sead::Vector2f(20.f, 270.f));
     textWriter->printf("Info\n\n");
+    textWriter->printf("Start Script %s\n\n", tas->getScriptName());
     PlayerActorBase* playerBase = rs::getPlayerActor(scene);
     if (!playerBase) {
         textWriter->printf("PlayerActorBase is null.\n");

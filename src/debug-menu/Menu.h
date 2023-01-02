@@ -46,6 +46,21 @@ public:
     bool isTriggerDown() const { return mCurPadInputs & 2; }
     bool isTriggerLeft() const { return mCurPadInputs & 4; }
     bool isTriggerRight() const { return mCurPadInputs & 8; }
+
+    //mechawiggler patterns
+    struct MofumofuPatternEntry {
+        const char* type;
+        int target;
+        bool reverse;
+    };
+
+    constexpr static const MofumofuPatternEntry mPatternEntries[23] = {
+        {"Random", -1, false}, {"Ghost", 0, false}, {"Nose", 0, true}, {"C", 1, false}, {"W", 1, true}, {"J", 2, false}, {"Medal", 2, true}, {"Plane", 3, false}, {"5", 3, true}, {"Hangman", 4, false}, {"Spanish", 4, true},
+        {"Siblings", 5, false}, {"Snake", 5, true}, {"8", 6, false}, {"Mushroom", 6, true}, {"Z", 7, false}, {"Tetris", 7, true}, {"Ear", 8, false}, {"Bomb", 8, true}, {"Bird", 9, false}, {"L", 9, true}, {"O", 10, false}, {"Star", 10, true}
+    };
+
+    int mofumofuPatternIndex = 0;
+
 private:
     u8 mPrevPadInputs = 0;
     u8 mCurPadInputs = 0;

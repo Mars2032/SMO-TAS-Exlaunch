@@ -8,7 +8,4 @@ struct PageTAS : public PageBase {
     void init() override;
     void handleInput(int cursorIndex) override;
     void draw(al::Scene* scene, sead::TextWriter* textWriter) override;
-    void updateDir();
-    nn::fs::DirectoryEntry* mEntries = nullptr;
-    s64 mEntryCount;
 };
