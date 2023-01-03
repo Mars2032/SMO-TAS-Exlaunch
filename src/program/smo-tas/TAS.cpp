@@ -98,7 +98,7 @@ bool TAS::tryLoadScript() {
 }
 
 void TAS::startScript() {
-    //Logger::log("In startScript()\n");
+    Logger::log("In startScript()\n");
     bool isWait = false;
     if (mScript->isTwoPlayer != rs::isSeparatePlay(mScene)) {
         al::GamePadSystem* gamePadSystem = GameSystemFunction::getGameSystem()->mGamePadSystem;
@@ -112,7 +112,7 @@ void TAS::startScript() {
             isWait = true;
         }
     }
-    //Logger::log("In Correct Mode\n");
+    Logger::log("In Correct Mode\n");
 
     GameDataHolderAccessor accessor(mScene);
     if (!al::isEqualString(mScript->mChangeStageName,"")) {
@@ -121,7 +121,7 @@ void TAS::startScript() {
         accessor.mData->changeNextStage(&info, 0);
         isWait = true;
     }
-    //Logger::log("Starting Script: %s\n", mScriptName.cstr());
+    Logger::log("Starting Script: %s\n", mScriptName.cstr());
     if (isWait)
         al::setNerve(this, &nrvTASWaitUpdate);
     else
@@ -159,7 +159,7 @@ void TAS::applyFrame(Frame& frame) {
 
 void TAS::exeUpdate() {
     if (al::isFirstStep(this)) {
-        //Logger::log("Update First Step\n");
+        Logger::log("Update First Step\n");
         mFrameIndex = 0;
         mPrevButtons[0] = 0;
         mPrevButtons[1] = 0;
@@ -175,7 +175,7 @@ void TAS::exeUpdate() {
     bool updated[2] = { false, false };
 
     while (mFrameIndex < mScript->mFrameCount) {
-        //Logger::log("Frame Index: %d, Step: %d\n", mFrameIndex, al::getNerveStep(this));
+        Logger::log("Frame Index: %d, Step: %d\n", mFrameIndex, al::getNerveStep(this));
         Frame& curFrame = mScript->mFrames[mFrameIndex];
         if (step < curFrame.mStep) break;
         mFrameIndex++; // increment after checking step
@@ -183,7 +183,7 @@ void TAS::exeUpdate() {
         applyFrame(curFrame);
 
         mPrevButtons[curFrame.secondPlayer] = curFrame.mButtons;
-        //Logger::log("Applied frame: %d, step: %d\n", mFrameIndex, curFrame.mStep);
+        Logger::log("Applied frame: %d, step: %d\n", mFrameIndex, curFrame.mStep);
     }
 
     if (!updated[0]) {
@@ -197,7 +197,7 @@ void TAS::exeUpdate() {
         applyFrame(frame);
     }
     if (mFrameIndex >= mScript->mFrameCount) {
-        //Logger::log("Ended Script on Step: %d\n", al::getNerveStep(this));
+        Logger::log("Ended Script on Step: %d\n", al::getNerveStep(this));
         //al::setNerve(this, &nrvTASWait);
         endScript();
     }

@@ -298,7 +298,7 @@ extern "C" void exl_main(void* x0, void* x1) {
     /* Setup hooking enviroment. */
     envSetOwnProcessHandle(exl::util::proc_handle::Get());
     exl::hook::Initialize();
-    //R_ABORT_UNLESS(Logger::instance().init(LOGGER_IP, 3080).value);
+    R_ABORT_UNLESS(Logger::instance().init(LOGGER_IP, 3080).value);
     runCodePatches();
     GameSystemInit::InstallAtOffset(0x535850);
 

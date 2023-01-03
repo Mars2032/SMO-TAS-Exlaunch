@@ -55,14 +55,7 @@ void PageTAS::handleInput(int cursorIndex) {
 void PageTAS::draw(al::Scene* scene, sead::TextWriter* textWriter) {
     Menu* menu = Menu::instance();
     TAS* tas = TAS::instance();
-    textWriter->printf("TAS\n");
-    if (tas->hasScript()) {
-        textWriter->printf("Initial Coordinates:  (X: %.3f  Y: %.3f  Z: %.3f)\n", tas->getStartPosition().x,
-                           tas->getStartPosition().y, tas->getStartPosition().z);
-    }
-    else {
-        textWriter->printf("\n");
-    }
+    textWriter->printf("TAS\n\n");
     textWriter->printf("Start Script %s\n", tas->getScriptName());
     textWriter->printf("End Script\n\n");
     textWriter->printf("Refresh Directory\n");
