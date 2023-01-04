@@ -25,5 +25,7 @@ void PageAbout::draw(al::Scene* scene, sead::TextWriter* textWriter) {
     textWriter->printf("How to use:\n  D-Pad Up and Down control the cursor.\n  D-Pad Right to select.\n  L-Stick Press disables the menu.\n  Non-dpad inputs will not work when a TAS is running.\n");
     textWriter->setCursorFromTopLeft(sead::Vector2f(20.f, 690.f));
     textWriter->printf("Return to Main     %s", menu->isHandleInputs ? "" : "[MENU DISABLED]");
-    textWriter->printf("  %s\n", tas->isRunning() ? "[TAS RUNNING]" : "");
+    if (tas->isRunning()) {
+            textWriter->printf("[TAS RUNNING %d/%d]", tas->getFrameIndex(), tas->getFrameCount());
+    }
 }

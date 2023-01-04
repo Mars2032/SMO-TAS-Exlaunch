@@ -3,8 +3,10 @@
 #include "al/Pad/PadGyroAddon.h"
 #include "al/area/ChangeStageInfo.h"
 #include "al/util/NerveUtil.h"
+#include "al/util.hpp"
 #include "filedevice/seadFileDeviceMgr.h"
 #include "fs/fs_files.hpp"
+#include "fs/fs_directories.hpp"
 #include "game/Controller/ControllerAppletFunction.h"
 #include "game/System/GameSystem.h"
 #include "rs/util/LiveActorUtil.h"
@@ -26,22 +28,70 @@ TAS::TAS() : al::NerveExecutor("TAS") {
 
 TAS::~TAS() = default;
 
-bool TAS::tryLoadScript(nn::fs::DirectoryEntry& entry) {
+void TAS::updateDir() {
+    nn::fs::DirectoryHandle handle;
+    nn::Result r = nn::fs::OpenDirectory(&handle, "sd:/scripts", nn::fs::OpenDirectoryMode_File);
+    if (R_FAILED(r)) return;
+    s64 entryCount;
+    r = nn::fs::GetDirectoryEntryCount(&entryCount, handle);
+    if (R_FAILED(r)) {
+        nn::fs::CloseDirectory(handle);
+        return;
+    }
+    nn::fs::DirectoryEntry* entryBuffer = new nn::fs::DirectoryEntry[entryCount];
+    r = nn::fs::ReadDirectory(&entryCount, entryBuffer, handle, entryCount);
+    nn::fs::CloseDirectory(handle);
+    if (R_FAILED(r)) {
+        delete[] entryBuffer;
+        return;
+    }
+    delete[] mEntries;
+    mEntries = entryBuffer;
+    mEntryCount = entryCount;
+}
+
+bool TAS::refreshCurrentScriptEntry() { //returns false if no file exists with the current script name
+    oldScriptEntry = currentScriptEntry;
+    updateDir();
+    for (int i = 0; i < mEntryCount; i++) {
+        if (strcmp(oldScriptEntry.m_Name, mEntries[i].m_Name) == 0) {
+            currentScriptEntry = mEntries[i];
+            return true;
+        }
+    }
+    return false;
+};
+
+//tries to start the current script
+bool TAS::tryStartScript() {
+    if (tryLoadScript()) {
+        startScript();
+        return true;
+    }
+    return false;
+}
+
+bool TAS::tryLoadScript() {
     endScript();
-    mScriptName = entry.m_Name;
-    sead::FormatFixedSafeString<256> scriptPath("sd:/scripts/%s", entry.m_Name);
+    if (!refreshCurrentScriptEntry()) {
+        return false;
+    }
+    mScriptName = currentScriptEntry.m_Name;
+    sead::FormatFixedSafeString<256> scriptPath("sd:/scripts/%s", currentScriptEntry.m_Name);
     nn::fs::FileHandle handle;
     nn::Result r = nn::fs::OpenFile(&handle,scriptPath.cstr(),nn::fs::OpenMode::OpenMode_Read);
     if (R_FAILED(r)) return false;
-    mScript = (Script*)new (al::getSequenceHeap())u8[entry.m_FileSize];
-    r = nn::fs::ReadFile(handle, 0,mScript,entry.m_FileSize);
+    mScript = (Script*)new (al::getSequenceHeap())u8[currentScriptEntry.m_FileSize];
+    r = nn::fs::ReadFile(handle, 0,mScript,currentScriptEntry.m_FileSize);
     nn::fs::CloseFile(handle);
     if (R_FAILED(r)) {
         endScript();
+        mScriptName = "";
         return false;
     }
     if (mScript->mMagic != Script::magic) {
         endScript();
+        mScriptName = "";
         return false;
     }
     return true;
@@ -81,7 +131,7 @@ void TAS::startScript() {
 void TAS::endScript() {
     al::setNerve(this, &nrvTASWait);
     operator delete (mScript, al::getSequenceHeap());
-    mScriptName = "";
+    //mScriptName = "";
 }
 
 void TAS::applyFrame(Frame& frame) {
@@ -113,6 +163,12 @@ void TAS::exeUpdate() {
         mFrameIndex = 0;
         mPrevButtons[0] = 0;
         mPrevButtons[1] = 0;
+        PlayerActorBase* playerBase = rs::getPlayerActor(mScene);
+        if (playerBase && !(mScript->mStartPosition.x == 0 && mScript->mStartPosition.y == 0 && mScript->mStartPosition.z == 0)) { //teleport unless position is (0, 0, 0)
+            playerBase->startDemoPuppetable();
+            al::setTrans(playerBase, mScript->mStartPosition);
+            playerBase->endDemoPuppetable();
+        }
     }
     int step = al::getNerveStep(this);
 
@@ -142,9 +198,26 @@ void TAS::exeUpdate() {
     }
     if (mFrameIndex >= mScript->mFrameCount) {
         Logger::log("Ended Script on Step: %d\n", al::getNerveStep(this));
-        al::setNerve(this, &nrvTASWait);
+        //al::setNerve(this, &nrvTASWait);
+        endScript();
     }
 
+}
+
+int TAS::getFrameIndex() {
+    return mFrameIndex;
+}
+
+int TAS::getFrameCount() {
+    return mScript->mFrameCount;
+}
+
+sead::Vector3f TAS::getStartPosition() {
+    return mScript->mStartPosition;
+}
+
+bool TAS::hasScript() {
+    return (mScript);
 }
 
 void TAS::exeWait() {
