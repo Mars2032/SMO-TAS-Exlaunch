@@ -54,7 +54,7 @@ namespace exl::hook::nx64 {
 
         // Hooking constants
         constexpr s64 MaxInstructions = 5;
-        constexpr u64 HookMax = 10;
+        constexpr u64 HookMax = 32;
         constexpr size_t TrampolineSize = MaxInstructions * 10;
         constexpr u64 MaxReferences = MaxInstructions * 2;
         constexpr u32 Aarch64Nop = 0xd503201f;

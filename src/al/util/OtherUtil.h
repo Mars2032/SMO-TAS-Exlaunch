@@ -163,6 +163,8 @@ void showModelIfHide(al::LiveActor*);
 void hideModel(al::LiveActor*);
 void showModel(al::LiveActor*);
 
+PlayerActorBase* getPlayerActor(al::LiveActor const*, int);
+
 }  // namespace al
 
 namespace rs {

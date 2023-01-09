@@ -16,7 +16,9 @@ class StageScene : public al::Scene
         // 0xA0 SceneObjHolder *
         // 0xA8 SceneStopCtrl *
 
-        unsigned char padding_180[0x180 - INHERITSIZE];
+        void* padding_180;
+        const char* seedText;
+        unsigned char padding_190[0x98];
         StageSceneStatePauseMenu *mStatePauseMenu; // 0x180
         unsigned char padding_2D0[0x148];
         GameDataHolderAccessor mHolder; // 0x2D0

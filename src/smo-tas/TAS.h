@@ -1,6 +1,9 @@
 #pragma once
 
-#include "debug-menu/Menu.h"
+#include "al/nerve/NerveExecutor.h"
+#include "al/scene/Scene.h"
+#include "fs/fs_types.hpp"
+#include "heap/seadDisposer.h"
 #include "smo-tas/Frame.h"
 
 class TAS : public al::NerveExecutor {
@@ -18,25 +21,24 @@ public:
     void exeRecord();
     bool isRunning();
     void setScene(al::Scene* scene) { mScene = scene; };
+    void setScript(nn::fs::DirectoryEntry entry) { mLoadedEntry = entry; };
     al::Scene* getScene() const { return mScene; };
-    const char* getScriptName() const { return mScriptName.cstr(); };
-    int getFrameIndex();
-    int getFrameCount();
-    sead::Vector3f getStartPosition();
-    bool hasScript();
-
+    const char* getScriptName() const { return mLoadedEntry.m_Name; };
+    nn::fs::DirectoryEntry* getScripts() const { return mEntries; };
+    s64 getEntryCount() const { return mEntryCount; };
+    u32 getFrameIndex() const { return mFrameIndex; };
+    u32 getFrameCount() const { return mScript->mFrameCount; };
+    sead::Vector3f getStartPosition() const { return mScript->mStartPosition; };
+    bool hasScript() const { return mScript != nullptr; };
     void updateDir();
-    bool refreshCurrentScriptEntry();
     bool tryStartScript();
-    nn::fs::DirectoryEntry* mEntries = nullptr;
-    s64 mEntryCount;
-    nn::fs::DirectoryEntry currentScriptEntry;
-    nn::fs::DirectoryEntry oldScriptEntry;
-private:
-    sead::FixedSafeString<0x80> mScriptName;
-    int mFrameIndex = 0;
-    u32 mPrevButtons[2];
-    Script* mScript;
-    al::Scene* mScene;
-};
 
+private:
+    s64 mEntryCount;
+    nn::fs::DirectoryEntry* mEntries = nullptr;
+    nn::fs::DirectoryEntry mLoadedEntry;
+    u32 mFrameIndex = 0;
+    u32 mPrevButtons[2];
+    Script* mScript = nullptr;
+    al::Scene* mScene = nullptr;
+};

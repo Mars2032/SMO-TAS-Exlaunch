@@ -6,9 +6,7 @@
 #pragma once
 
 #include "types.h"
-
-class NVNtextureView;
-class NVNtexture;
+#include "nvn/nvn.h"
 
 namespace agl
 {

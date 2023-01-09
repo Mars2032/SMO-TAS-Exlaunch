@@ -7,9 +7,8 @@
 
 #include "types.h"
 #include "agl/util.h"
+#include "nvn/nvn.h"
 
-class NVNtextureBuilder;
-class NVNtexture;
 
 namespace agl
 {

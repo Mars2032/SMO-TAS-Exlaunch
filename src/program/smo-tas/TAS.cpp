@@ -1,17 +1,20 @@
 #include "smo-tas/TAS.h"
 #include "al/Pad/JoyPadAccelerometerAddon.h"
+#include "al/Pad/NpadController.h"
 #include "al/Pad/PadGyroAddon.h"
 #include "al/area/ChangeStageInfo.h"
-#include "al/util/NerveUtil.h"
 #include "al/util.hpp"
+#include "al/util/NerveUtil.h"
+#include "al/util/OtherUtil.h"
 #include "filedevice/seadFileDeviceMgr.h"
-#include "fs/fs_files.hpp"
 #include "fs/fs_directories.hpp"
+#include "fs/fs_files.hpp"
 #include "game/Controller/ControllerAppletFunction.h"
 #include "game/System/GameSystem.h"
+#include "logger/Logger.hpp"
+#include "result.h"
 #include "rs/util/LiveActorUtil.h"
 #include "sead/basis/seadNew.h"
-#include "al/Pad/NpadController.h"
 
 namespace {
     NERVE_DEF(TAS, Update);
@@ -24,6 +27,7 @@ SEAD_SINGLETON_DISPOSER_IMPL(TAS);
 
 TAS::TAS() : al::NerveExecutor("TAS") {
     initNerve(&nrvTASWait, 0);
+    updateDir();
 }
 
 TAS::~TAS() = default;
@@ -50,19 +54,6 @@ void TAS::updateDir() {
     mEntryCount = entryCount;
 }
 
-bool TAS::refreshCurrentScriptEntry() { //returns false if no file exists with the current script name
-    oldScriptEntry = currentScriptEntry;
-    updateDir();
-    for (int i = 0; i < mEntryCount; i++) {
-        if (strcmp(oldScriptEntry.m_Name, mEntries[i].m_Name) == 0) {
-            currentScriptEntry = mEntries[i];
-            return true;
-        }
-    }
-    return false;
-};
-
-//tries to start the current script
 bool TAS::tryStartScript() {
     if (tryLoadScript()) {
         startScript();
@@ -73,32 +64,34 @@ bool TAS::tryStartScript() {
 
 bool TAS::tryLoadScript() {
     endScript();
-    if (!refreshCurrentScriptEntry()) {
-        return false;
+    updateDir();
+    bool isEntryExist = false;
+    for (int i = 0; i < mEntryCount; i++) {
+        if (al::isEqualString(mEntries[i].m_Name, mLoadedEntry.m_Name)) {
+            mLoadedEntry = mEntries[i];
+            isEntryExist = true;
+        }
     }
-    mScriptName = currentScriptEntry.m_Name;
-    sead::FormatFixedSafeString<256> scriptPath("sd:/scripts/%s", currentScriptEntry.m_Name);
+    if (!isEntryExist) return false;
+    sead::FormatFixedSafeString<256> scriptPath("sd:/scripts/%s", mLoadedEntry.m_Name);
     nn::fs::FileHandle handle;
     nn::Result r = nn::fs::OpenFile(&handle,scriptPath.cstr(),nn::fs::OpenMode::OpenMode_Read);
     if (R_FAILED(r)) return false;
-    mScript = (Script*)new (al::getSequenceHeap())u8[currentScriptEntry.m_FileSize];
-    r = nn::fs::ReadFile(handle, 0,mScript,currentScriptEntry.m_FileSize);
+    mScript = (Script*)new (al::getSequenceHeap())u8[mLoadedEntry.m_FileSize];
+    r = nn::fs::ReadFile(handle, 0,mScript, mLoadedEntry.m_FileSize);
     nn::fs::CloseFile(handle);
     if (R_FAILED(r)) {
         endScript();
-        mScriptName = "";
         return false;
     }
     if (mScript->mMagic != Script::magic) {
         endScript();
-        mScriptName = "";
         return false;
     }
     return true;
 }
 
 void TAS::startScript() {
-    Logger::log("In startScript()\n");
     bool isWait = false;
     if (mScript->isTwoPlayer != rs::isSeparatePlay(mScene)) {
         al::GamePadSystem* gamePadSystem = GameSystemFunction::getGameSystem()->mGamePadSystem;
@@ -112,7 +105,6 @@ void TAS::startScript() {
             isWait = true;
         }
     }
-    Logger::log("In Correct Mode\n");
 
     GameDataHolderAccessor accessor(mScene);
     if (!al::isEqualString(mScript->mChangeStageName,"")) {
@@ -121,7 +113,6 @@ void TAS::startScript() {
         accessor.mData->changeNextStage(&info, 0);
         isWait = true;
     }
-    Logger::log("Starting Script: %s\n", mScriptName.cstr());
     if (isWait)
         al::setNerve(this, &nrvTASWaitUpdate);
     else
@@ -131,7 +122,6 @@ void TAS::startScript() {
 void TAS::endScript() {
     al::setNerve(this, &nrvTASWait);
     operator delete (mScript, al::getSequenceHeap());
-    //mScriptName = "";
 }
 
 void TAS::applyFrame(Frame& frame) {
@@ -159,7 +149,6 @@ void TAS::applyFrame(Frame& frame) {
 
 void TAS::exeUpdate() {
     if (al::isFirstStep(this)) {
-        Logger::log("Update First Step\n");
         mFrameIndex = 0;
         mPrevButtons[0] = 0;
         mPrevButtons[1] = 0;
@@ -175,7 +164,7 @@ void TAS::exeUpdate() {
     bool updated[2] = { false, false };
 
     while (mFrameIndex < mScript->mFrameCount) {
-        Logger::log("Frame Index: %d, Step: %d\n", mFrameIndex, al::getNerveStep(this));
+        //Logger::log("Frame Index: %d, Step: %d\n", mFrameIndex, al::getNerveStep(this));
         Frame& curFrame = mScript->mFrames[mFrameIndex];
         if (step < curFrame.mStep) break;
         mFrameIndex++; // increment after checking step
@@ -183,7 +172,7 @@ void TAS::exeUpdate() {
         applyFrame(curFrame);
 
         mPrevButtons[curFrame.secondPlayer] = curFrame.mButtons;
-        Logger::log("Applied frame: %d, step: %d\n", mFrameIndex, curFrame.mStep);
+        //Logger::log("Applied frame: %d, step: %d\n", mFrameIndex, curFrame.mStep);
     }
 
     if (!updated[0]) {
@@ -197,27 +186,11 @@ void TAS::exeUpdate() {
         applyFrame(frame);
     }
     if (mFrameIndex >= mScript->mFrameCount) {
-        Logger::log("Ended Script on Step: %d\n", al::getNerveStep(this));
+        //Logger::log("Ended Script on Step: %d\n", al::getNerveStep(this));
         //al::setNerve(this, &nrvTASWait);
         endScript();
     }
 
-}
-
-int TAS::getFrameIndex() {
-    return mFrameIndex;
-}
-
-int TAS::getFrameCount() {
-    return mScript->mFrameCount;
-}
-
-sead::Vector3f TAS::getStartPosition() {
-    return mScript->mStartPosition;
-}
-
-bool TAS::hasScript() {
-    return (mScript);
 }
 
 void TAS::exeWait() {

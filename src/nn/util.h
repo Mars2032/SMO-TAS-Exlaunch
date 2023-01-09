@@ -9,6 +9,7 @@
 #pragma once
 
 #include <nx/types.h>
+#include <type_traits>
 
 namespace nn {
     namespace util {
@@ -16,16 +17,22 @@ namespace nn {
             u8 elements[0x4];
         };
 
-        enum CharacterEncodingResult { Success, BadLength, InvalidFormat };
+        enum CharacterEncodingResult {
+            Success, BadLength, InvalidFormat
+        };
 
-        CharacterEncodingResult PickOutCharacterFromUtf8String(char*, char const** str);
-        CharacterEncodingResult ConvertCharacterUtf8ToUtf32(u32* dest, char const* src);
-        CharacterEncodingResult ConvertStringUtf16NativeToUtf8(char*, s32, u16 const*, s32);
-        CharacterEncodingResult ConvertStringUtf8ToUtf16Native(u16*, s32, char const*, s32);
+        CharacterEncodingResult PickOutCharacterFromUtf8String(char *, char const **str);
+
+        CharacterEncodingResult ConvertCharacterUtf8ToUtf32(u32 *dest, char const *src);
+
+        CharacterEncodingResult ConvertStringUtf16NativeToUtf8(char *, s32, u16 const *, s32);
+
+        CharacterEncodingResult ConvertStringUtf8ToUtf16Native(u16 *, s32, char const *, s32);
 
         class RelocationTable {
         public:
             void Relocate();
+
             void Unrelocate();
 
             s32 mMagic;         // _0
@@ -36,9 +43,12 @@ namespace nn {
         class BinaryFileHeader {
         public:
             bool IsValid(s64 packedSig, s32 majorVer, s32 minorVer, s32 microVer) const;
+
             bool IsRelocated() const;
+
             bool IsEndianReverse() const;
-            nn::util::RelocationTable* GetRelocationTable();
+
+            nn::util::RelocationTable *GetRelocationTable();
 
             s32 mMagic;                // _0
             u32 mSig;                  // _4
@@ -55,18 +65,33 @@ namespace nn {
             u32 mSize;                 // _1C
         };
 
-        template <s32 size, typename T>
-        struct BitFlagSet {
-            u32 field: size;
+//        template<s32 size, typename Enum>
+//        struct BitFlagSet {
+//            using Storage = std::underlying_type_t<Enum>;
+//            Storage field: size;
+//
+//            inline bool isFlagSet(Enum t) const {
+//                return (field & static_cast<Storage>(t)) != 0;
+//            }
+//        };
 
-            inline bool isFlagSet(T t) const {
-                return (field & static_cast<u32>(t)) != 0;
+        template<s32 size, typename T>
+        struct BitFlagSet {
+            using type = std::conditional_t<size <= 32, u32, u64>;
+            static const int storageBits = static_cast<int>(sizeof(type)) * 8;
+            static const int storageCount = static_cast<int>((size + storageBits - 1)) / storageBits;
+            type field[storageCount];
+
+            inline bool isBitSet(T index) const {
+                return (this->field[static_cast<u64>(index) / storageBits] &
+                        (static_cast<type>(1) << static_cast<u64>(index) % storageBits)) != 0;
             }
         };
 
-        s32 SNPrintf(char* s, ulong n, const char* format, ...);
-        s32 VSNPrintf(char* s, ulong n, const char* format, va_list arg);
+        s32 SNPrintf(char *s, ulong n, const char *format, ...);
+
+        s32 VSNPrintf(char *s, ulong n, const char *format, va_list arg);
     }  // namespace util
 
-    void ReferSymbol(void const*);
+    void ReferSymbol(void const *);
 }  // namespace nn

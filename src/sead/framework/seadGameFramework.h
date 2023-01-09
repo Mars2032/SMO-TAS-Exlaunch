@@ -5,9 +5,7 @@
 #include "sead/math/seadVector.h"
 #include "sead/thread/seadThread.h"
 #include "sead/prim/seadRuntimeTypeInfo.h"
-
-struct NVNcommandBuffer;
-struct NVNcommandBufferMemoryEvent;
+#include "nvn/nvn.h"
 
 namespace sead
 {
