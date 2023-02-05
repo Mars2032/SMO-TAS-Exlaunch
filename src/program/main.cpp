@@ -1,8 +1,4 @@
 #include "agl/utl.h"
-#include "al/LiveActor/LiveActorFlag.h"
-#include "al/Pad/JoyPadAccelerometerAddon.h"
-#include "al/Pad/PadGyroAddon.h"
-#include "al/actor/LiveActorKit.h"
 #include "al/byaml/writer/ByamlWriter.h"
 #include "al/fs/FileLoader.h"
 #include "al/util.hpp"
@@ -16,7 +12,6 @@
 #include "game/System/GameSystem.h"
 #include "gfx/seadPrimitiveRenderer.h"
 #include "ghost/ghost-recorder.h"
-#include "imgui_backend/imgui_impl_nvn.hpp"
 #include "imgui_nvn.h"
 #include "lib.hpp"
 #include "logger/Logger.hpp"
@@ -277,11 +272,11 @@ extern "C" void exl_main(void* x0, void* x1) {
     exl::hook::Initialize();
     R_ABORT_UNLESS(Logger::instance().init(LOGGER_IP, 3080).value);
     runCodePatches();
-    GameSystemInit::InstallAtOffset(0x535850);
+    GameSystemInit::InstallAtSymbol("_ZN10GameSystem4initEv");
     GlobalRandomInit::InstallAtSymbol("_ZN4sead12GlobalRandom14createInstanceEPNS_4HeapE");
 
     // Debug Text Writer Drawing
-    DrawDebugMenu::InstallAtOffset(0x50F1D8);
+    DrawDebugMenu::InstallAtSymbol("_ZNK16HakoniwaSequence8drawMainEv");
 
     // TAS
     SceneMovementHook::InstallAtSymbol("_ZN2al5Scene8movementEv");
