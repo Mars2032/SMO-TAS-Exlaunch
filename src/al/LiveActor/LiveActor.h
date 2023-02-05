@@ -18,6 +18,7 @@
 #include "al/screen/ScreenPointKeeper.h"
 #include "al/sensor/HitSensorKeeper.h"
 #include "al/switch/StageSwitchKeeper.h"
+#include "al/LiveActor/LiveActorFlag.h"
 
 // vtable for LiveActor: 1C4EB58
 
@@ -35,7 +36,6 @@ namespace al
     class ActorPrePassLightKeeper;
     class ActorOcclusionKeeper;
     class SubActorKeeper;
-    class LiveActorFlag;
 
     class ActorInitInfo;
     class HitSensor;

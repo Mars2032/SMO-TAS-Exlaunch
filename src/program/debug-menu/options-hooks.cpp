@@ -1,7 +1,6 @@
 #include "ImGuiMenu.h"
 #include "al/LiveActor/LiveActor.h"
 #include "game/StageScene/StageScene.h"
-#include "hook/trampoline_hook.hpp"
 #include "logger/Logger.hpp"
 #include "os/os_tick.hpp"
 #include "patch/code_patcher.hpp"

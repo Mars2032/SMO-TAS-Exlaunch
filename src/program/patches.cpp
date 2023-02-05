@@ -1,36 +1,19 @@
 #include "patches.hpp"
-#include "al/util/RandomUtil.h"
-#include "debug-menu/ImGuiMenu.h"
 
 namespace patch = exl::patch;
 namespace inst = exl::armv8::inst;
 namespace reg = exl::armv8::reg;
 
+void costumeRoomPatches() {
+    patch::CodePatcher p(0x262850);
+    p.WriteInst(inst::Movz(reg::W0, 0));
+    p.Seek(0x2609B4);
+    p.WriteInst(inst::Movz(reg::W0, 0));
 
-//mechawiggler pattern setting
-bool isPatternReverse() {
-    auto* settings = Settings::instance();
-    if (settings->mPatternEntries[settings->mMofumofuPatternIndex].target == -1) { //if random pattern
-        return al::isHalfProbability();
-    }
-    else {
-        return settings->mPatternEntries[settings->mMofumofuPatternIndex].reverse;
-    }
-}
-
-int getMofumofuTarget(int a) {
-    auto* settings = Settings::instance();
-    if (settings->mPatternEntries[settings->mMofumofuPatternIndex].target == -1) { //if random pattern
-        return al::getRandom(a);
-    }
-    else {
-        return settings->mPatternEntries[settings->mMofumofuPatternIndex].target;
-    }
-}
-
-void mechawigglerPatches() {
-    patch::CodePatcher(0x0b07a8).BranchLinkInst((void*) isPatternReverse);
-    patch::CodePatcher(0x0b07f8).BranchLinkInst((void*) getMofumofuTarget);
+    p.Seek(0x25FF74);
+    p.WriteInst(inst::Movz(reg::W0, 1));
+    p.Seek(0x25FF74);
+    p.WriteInst(inst::Movz(reg::W0, 0));
 }
 
 void stubSocketInit() {
@@ -38,7 +21,14 @@ void stubSocketInit() {
     p.WriteInst(inst::Nop());
 }
 
+void enableDebugNvn() {
+    patch::CodePatcher p(0x7312CC);
+    p.WriteInst(inst::Nop());
+}
+
+
 void runCodePatches() {
-    mechawigglerPatches();
+    costumeRoomPatches();
     stubSocketInit();
+    enableDebugNvn();
 }

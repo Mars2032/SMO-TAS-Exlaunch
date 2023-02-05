@@ -193,9 +193,9 @@ HOOK_DEFINE_TRAMPOLINE(GameSystemInit) {
         sead::Heap* curHeap = sead::HeapMgr::instance()->getCurrentHeap();
         sead::DebugFontMgrJis1Nvn::createInstance(curHeap);
         if (al::isExistFile(DBG_SHADER_PATH) && al::isExistFile(DBG_FONT_PATH) && al::isExistFile(DBG_TBL_PATH)) {
-            sead::DebugFontMgrJis1Nvn::sInstance->initialize(curHeap, DBG_SHADER_PATH, DBG_FONT_PATH, DBG_TBL_PATH, 0x100000);
+            sead::DebugFontMgrJis1Nvn::instance()->initialize(curHeap, DBG_SHADER_PATH, DBG_FONT_PATH, DBG_TBL_PATH, 0x100000);
         }
-        sead::TextWriter::setDefaultFont(sead::DebugFontMgrJis1Nvn::sInstance);
+        sead::TextWriter::setDefaultFont(sead::DebugFontMgrJis1Nvn::instance());
         al::GameDrawInfo* drawInfo = Application::instance()->mDrawInfo;
         agl::DrawContext *context = drawInfo->mDrawContext;
         agl::RenderBuffer* renderBuffer = drawInfo->getRenderBuffer();
@@ -274,7 +274,6 @@ HOOK_DEFINE_TRAMPOLINE(DrawDebugMenu) {
 
 extern "C" void exl_main(void* x0, void* x1) {
     /* Setup hooking enviroment. */
-    envSetOwnProcessHandle(exl::util::proc_handle::Get());
     exl::hook::Initialize();
     R_ABORT_UNLESS(Logger::instance().init(LOGGER_IP, 3080).value);
     runCodePatches();

@@ -5,7 +5,8 @@
 #include "sead/math/seadVector.h"
 #include "sead/thread/seadThread.h"
 #include "sead/prim/seadRuntimeTypeInfo.h"
-#include "nvn/nvn.h"
+
+#include "nvn.h"
 
 namespace sead
 {

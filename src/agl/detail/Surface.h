@@ -7,8 +7,7 @@
 
 #include "types.h"
 #include "agl/util.h"
-#include "nvn/nvn.h"
-
+#include "nvn.h"
 
 namespace agl
 {

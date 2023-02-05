@@ -5,10 +5,15 @@
 #include <cafe.h>
 #endif // cafe
 
+#ifdef SWITCH
+#include <nvn_Cpp.h>
+#endif
+
 namespace sead {
 
     class Graphics
     {
+    SEAD_SINGLETON_DISPOSER(Graphics)
     public:
         enum DevicePosture
         {
@@ -198,6 +203,18 @@ namespace sead {
             cPolygonMode_Fill  = 0x00000002
 #endif // switch
         };
+#ifdef SWITCH
+        void *unkPtr1; // 0x20
+        void *unkPtr2; // 0x28
+        nvn::Device* mGfxDevice; // 0x30
+        char gap_38[0x20];
+        nvn::TexturePool *mTexPool; // 0x58
+        char gap_60[0x98];
+        int mSamplerId; // 0xF8
+        void *unkPtr3; // 0x100
+        sead::Atomic<int> mSamplerIdCount; // 0x108
+        sead::Atomic<int> mTextureIdCount; // 0x10C
+#endif
     };
 
 } // namespace sead

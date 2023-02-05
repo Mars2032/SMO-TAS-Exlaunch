@@ -1,6 +1,5 @@
 #pragma once
 
-#include "devenv/seadDebugFontMgrNvn.h"
 #include <gfx/seadColor.h>
 #include <math/seadBoundBox.h>
 
@@ -24,7 +23,6 @@ public:
     void setCursorFromTopLeft(sead::Vector2<f32> const &);
     void beginDraw();
     void endDraw();
-    void setColor(sead::Color4f const& c) { mColor = c; };
 
     sead::DebugFontMgrNvn *getDefaultFont();
     static void setDefaultFont(sead::FontBase *);

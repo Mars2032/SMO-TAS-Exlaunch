@@ -6,7 +6,7 @@
 #pragma once
 
 #include "types.h"
-#include "nvn/nvn.h"
+#include "nvn.h"
 
 namespace agl
 {

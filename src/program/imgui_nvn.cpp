@@ -186,7 +186,7 @@ void nvnImGui::InstallHooks() {
 bool nvnImGui::InitImGui() {
     if (nvnDevice && nvnQueue && nvnCmdBuf) {
 
-//        Logger::log("Creating ImGui.\n");
+        Logger::log("Creating ImGui.\n");
 
         IMGUI_CHECKVERSION();
 
@@ -220,9 +220,16 @@ bool nvnImGui::InitImGui() {
 
 
 #if IMGUI_USEEXAMPLE_DRAW
-        nvnImGui::addDrawFunc([] () {
-            ImGui::ShowDemoWindow();
-        });
+        IMGUINVN_DRAWFUNC(
+                ImGui::ShowDemoWindow();
+            //    ImGui::ShowStyleSelector("Style Selector");
+            //        ImGui::ShowMetricsWindow();
+            //        ImGui::ShowDebugLogWindow();
+            //        ImGui::ShowStackToolWindow();
+            //        ImGui::ShowAboutWindow();
+            //        ImGui::ShowFontSelector("Font Selector");
+            //        ImGui::ShowUserGuide();
+        )
 #endif
 
         return true;

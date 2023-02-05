@@ -19,9 +19,7 @@ namespace al {
     struct ScreenCoverCtrl;
     struct ShadowDirector;
     struct ModelGroup;
-    struct GraphicsSystemInfo {
-        agl::DrawContext* getDrawContext() const;
-    };
+    struct GraphicsSystemInfo;
     struct PlayerHolder;
     struct ModelDrawBufferCounter;
 
