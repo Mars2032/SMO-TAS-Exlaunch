@@ -1,7 +1,7 @@
 #pragma once
 
-#include "al/byaml/ByamlIter.h"
-#include "al/byaml/writer/ByamlWriter.h"
+#include "ByamlIter.h"
+#include "writer/ByamlWriter.h"
 #include "al/hio/HioNode.h"
 
 class ByamlSave : public al::HioNode {

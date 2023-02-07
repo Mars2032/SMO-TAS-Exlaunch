@@ -34,8 +34,6 @@ static sead::TextWriter* gTextWriter;
 void drawHitSensors(al::LiveActor* actor) {
     auto* settings = Settings::instance();
     sead::PrimitiveRenderer* renderer = sead::PrimitiveRenderer::instance();
-    if (actor->mPoseKeeper && settings->isShowTrans)
-        renderer->drawSphere8x16(al::getTrans(actor), 10, sead::Color4f(0.7922*0.7922,0.0,1.0,1.0));
     al::HitSensorKeeper* sensorKeeper = actor->mHitSensorKeeper;
     if (sensorKeeper && settings->isShowSensors) {
         for (int i = 0; i < sensorKeeper->mSensorNum; i++) {
@@ -105,6 +103,20 @@ void drawHitSensors(al::LiveActor* actor) {
 
 }
 
+void drawTrans(al::LiveActor* actor) {
+    auto* settings = Settings::instance();
+    sead::PrimitiveRenderer* renderer = sead::PrimitiveRenderer::instance();
+    if (actor->mPoseKeeper && settings->isShowTrans)
+        renderer->drawSphere8x16(al::getTrans(actor), 10, sead::Color4f(0.7922*0.7922,0.0,1.0,1.0));
+}
+
+void drawCameraTargetTrans(al::CameraPoser* cam) {
+    auto* settings = Settings::instance();
+    sead::PrimitiveRenderer* renderer = sead::PrimitiveRenderer::instance();
+    if (settings->isShowCameraTargetTrans)
+        renderer->drawSphere8x16(cam->mTargetTrans, 10, sead::Color4f(0.07843*0.07843, 0.89411*0.89411, 1.0, 1.0));
+}
+
 HOOK_DEFINE_TRAMPOLINE(DataReadHook) {
     static void Callback(void* thisPtr, const al::ByamlIter& iter) {
         Orig(thisPtr, iter);
@@ -127,6 +139,7 @@ HOOK_DEFINE_TRAMPOLINE(DataReadHook) {
         al::tryGetByamlBool(&settings->isEnableMoonRefresh, iter, "MoonRefresh");
         al::tryGetByamlBool(&settings->isEnableGreyMoonRefresh, iter, "GreyMoonRefresh");
         al::tryGetByamlS64(&settings->mRandomSeed, iter, "RandomSeed");
+        al::tryGetByamlBool(&settings->isShowCameraTargetTrans, iter, "CameraTargetTrans");
     }
 };
 
@@ -152,6 +165,7 @@ HOOK_DEFINE_TRAMPOLINE(DataWriteHook) {
         writer->addBool("GreyMoonRefresh", settings->isEnableGreyMoonRefresh);
         writer->addBool("MoonRefresh", settings->isEnableMoonRefresh);
         writer->addInt64("RandomSeed", settings->mRandomSeed);
+        writer->addBool("CameraTargetTrans", settings->isShowCameraTargetTrans);
     }
 };
 
@@ -221,23 +235,29 @@ HOOK_DEFINE_TRAMPOLINE(GlobalRandomInit) {
     }
 };
 
+static constexpr int frameCount = 120;
+float framerates[frameCount];
+int frameIndex = 0;
+
 HOOK_DEFINE_TRAMPOLINE(DrawDebugMenu) {
     static void Callback(HakoniwaSequence *thisPtr) {
         Orig(thisPtr);
-
         al::Scene* curScene = thisPtr->mCurrentScene;
         agl::DrawContext* drawContext = thisPtr->getDrawInfo()->mDrawContext;
-
+        // fps stuff
+        float fps = Application::instance()->mFramework->calcFps();
+        framerates[frameIndex] = fps;
+        frameIndex = (frameIndex+1) % frameCount;
         // Only runs if scene exists and HakoniwaSequence nerve doesn't contain Destroy
         if (curScene && !strstr(typeid(*al::getCurrentNerve(thisPtr)).name(), "Destroy")) {
+            const sead::LookAtCamera* cam = al::getLookAtCamera(curScene, 0);
+            const sead::Projection* proj = al::getProjectionSead(curScene, 0);
+            sead::PrimitiveRenderer* renderer = sead::PrimitiveRenderer::instance();
+            renderer->setDrawContext(drawContext);
+            renderer->setCamera(*cam);
+            renderer->setProjection(*proj);
+            renderer->setModelMatrix(sead::Matrix34f::ident);
             if (curScene->mLiveActorKit) {
-                const sead::LookAtCamera* cam = al::getLookAtCamera(curScene, 0);
-                const sead::Projection* proj = al::getProjectionSead(curScene, 0);
-                sead::PrimitiveRenderer* renderer = sead::PrimitiveRenderer::instance();
-                renderer->setDrawContext(drawContext);
-                renderer->setCamera(*cam);
-                renderer->setProjection(*proj);
-                renderer->setModelMatrix(sead::Matrix34f::ident);
                 al::LiveActorGroup* actorGroup = curScene->mLiveActorKit->mLiveActorGroup2;
                 if (actorGroup) {
                     for (int i = 0; i < actorGroup->mActorCount; i++) {
@@ -248,23 +268,29 @@ HOOK_DEFINE_TRAMPOLINE(DrawDebugMenu) {
                                 renderer->begin();
                                 drawHitSensors(curActor);
                                 renderer->end();
+                                renderer->begin();
+                                drawTrans(curActor);
+                                renderer->end();
                             }
                         }
                     }
                 }
             }
+
+            auto* director = curScene->getCameraDirector();
+            if (director) {
+                auto* updater = director->getPoseUpdater(0);
+                if (updater && updater->mTicket) {
+                    auto* cameraPoser = updater->mTicket->mPoser;
+                    renderer->begin();
+                    drawCameraTargetTrans(cameraPoser);
+                    renderer->end();
+                }
+            }
         }
-        // fps in top left
-        gTextWriter->beginDraw();
 
-        gTextWriter->setCursorFromTopLeft(sead::Vector2f(10.f, 10.f));
-        gTextWriter->printf("FPS: %.2f\n", Application::instance()->mFramework->calcFps());
-
-        gTextWriter->setCursorFromTopLeft(sead::Vector2f(10.f, (al::getLayoutDisplayHeight() / 3) + 30.f));
-        gTextWriter->setScaleFromFontHeight(20.f);
-
-        gTextWriter->endDraw();
     }
+
 };
 
 extern "C" void exl_main(void* x0, void* x1) {

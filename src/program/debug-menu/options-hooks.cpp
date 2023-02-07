@@ -108,7 +108,7 @@ void optionsHooks() {
     ShineRefreshHook::InstallAtSymbol("_ZN16GameDataFunction11setGotShineE20GameDataHolderWriterPK9ShineInfo");
     GreyShineRefreshHook::InstallAtSymbol("_ZN16GameDataFunction10isGotShineE22GameDataHolderAccessorPK9ShineInfo");
     patch::CodePatcher p(0x762020);
-    p.BranchLinkInst((void*)&randomHook);
-    GetRandomHook::InstallAtSymbol("_ZN4sead6Random6getU32Ev");
-    RandomInitHook::InstallAtSymbol("_ZN4sead6Random4initEj");
+    //p.BranchLinkInst((void*)&randomHook);
+    //GetRandomHook::InstallAtSymbol("_ZN4sead6Random6getU32Ev");
+    //RandomInitHook::InstallAtSymbol("_ZN4sead6Random4initEj");
 }

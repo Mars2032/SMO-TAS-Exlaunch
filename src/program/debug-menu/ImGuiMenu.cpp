@@ -7,6 +7,7 @@
 #include "game/HakoniwaSequence/HakoniwaSequence.h"
 #include "game/Player/PlayerActorBase.h"
 #include "game/System/GameSystem.h"
+#include "game/System/Application.h"
 #include "helpers/PlayerHelper.h"
 #include "imgui_backend/imgui_impl_nvn.hpp"
 #include "logger/Logger.hpp"
@@ -26,7 +27,7 @@ static bool isShowInfo = false;
 static bool isShowTAS = false;
 static bool isShowDebug = false;
 static bool isShowAbout = false;
-static bool isShowHitSensor = false;
+static bool isShowRenderer = false;
 static bool isShowCollider = false;
 static bool isShowAreaObj = false;
 static bool isShowTASOptions = false;
@@ -34,28 +35,10 @@ static int scenario = -1;
 
 void drawPageMain() {
     if (Begin("Main")) {
+        SetWindowFontScale(1.25f);
         Text("Welcome to the SMO-TAS Mod!\n");
-        if (CollapsingHeader("Options")) {
-            al::Scene* scene = GameSystemFunction::getGameSystem()->mSequence->mCurrentScene;
-            if (scene) {
-                GameDataHolderAccessor accessor(scene);
-                if (Button("Save Options"))
-                    SaveDataAccessFunction::startSaveDataWriteSync(accessor.mData);
-            } else {
-                Text("Cannot save, scene is null.");
-            }
-            if (Button("General Options"))
-                isShowTASOptions = true;
-            if (Button("HitSensor Options")) {
-                isShowHitSensor = true;
-            }
-            if (Button("Collider Options")) {
-                isShowCollider = true;
-            }
-            if (Button("AreaObj Options")) {
-                isShowAreaObj = true;
-            }
-        }
+        if (Button("Options"))
+            isShowOptions = true;
         if (Button("Info"))
             isShowInfo = true;
         if (Button("TAS"))
@@ -64,20 +47,19 @@ void drawPageMain() {
             isShowDebug = true;
         if (Button("About"))
             isShowAbout = true;
-
     }
     End();
     drawPageInfo();
     drawPageTAS();
     drawPageDebug();
     drawPageAbout();
-    drawPageHitSensor();
-    drawPageGeneralOptions();
+    drawPageOptions();
 }
 
 void drawPageAbout() {
     if (!isShowAbout) return;
     if (Begin("About", &isShowAbout, ImGuiWindowFlags_NoResize)) {
+        SetWindowFontScale(1.25f);
         Text("Creators:");
         BulletText("Mars2030#8008");
         BulletText("tetraxile#0255");
@@ -89,119 +71,150 @@ void drawPageAbout() {
     End();
 }
 
-void drawPageHitSensor() {
-    if (!isShowHitSensor) return;
-    if (Begin("Renderer Options", &isShowHitSensor, ImGuiWindowFlags_NoResize)) {
-        auto* settings = Settings::instance();
-        Checkbox("Show All HitSensors", &settings->isShowSensors);
-        Checkbox("Show Eye Sensors", &settings->isShowEyes);
-        Checkbox("Show Attack Sensors", &settings->isShowAttack);
-        Checkbox("Show Npc Sensors", &settings->isShowNpc);
-        Checkbox("Show Bindable Sensors", &settings->isShowBindable);
-        Checkbox("Show EnemyBody Sensors", &settings->isShowEnemyBody);
-        Checkbox("Show MapObj Sensors", &settings->isShowMapObj);
-        Checkbox("Show Player Sensors", &settings->isShowPlayerAll);
-        Checkbox("Show Other Sensors", &settings->isShowOther);
-        SliderFloat("Sensor Alpha", &settings->mSensorAlpha, 0.0f, 1.0f);
-        Checkbox("Show Actor Positions", &settings->isShowTrans);
-    }
-    End();
-}
-
-void drawPageGeneralOptions() {
-    if (!isShowTASOptions) return;
-    if (Begin("General Options", &isShowTASOptions)) {
-        auto* settings = Settings::instance();
-        Checkbox("Make Moons Re-Collectable", &settings->isEnableMoonRefresh);
-        Checkbox("Make Moons Always Collectable", &settings->isEnableGreyMoonRefresh);
-        Checkbox("Auto-Saving", &settings->isEnableAutosave);
-        Checkbox("Make Cutscenes Always Skippable", &settings->isSkipCutscenes);
-
-        const char* previewValue = Settings::mPatternEntries[settings->mMofumofuPatternIndex].type;
-        if (BeginCombo("Mechawiggler Patterns", previewValue)) {
-            for (int i = 0; i < IM_ARRAYSIZE(Settings::mPatternEntries); i++) {
-                const bool isSelected = (settings->mMofumofuPatternIndex == i);
-                if (Selectable(Settings::mPatternEntries[i].type, isSelected))
-                    settings->mMofumofuPatternIndex = i;
-                if (isSelected)
-                    SetItemDefaultFocus();
-            }
-            EndCombo();
+void drawPageOptions() {
+    if (!isShowOptions) return;
+    if (Begin("Options", &isShowOptions)) {
+        SetWindowFontScale(1.25f);
+        al::Scene* scene = GameSystemFunction::getGameSystem()->mSequence->mCurrentScene;
+        if (scene) {
+            GameDataHolderAccessor accessor(scene);
+            if (Button("Save Options"))
+                SaveDataAccessFunction::startSaveDataWriteSync(accessor.mData);
+        } else {
+            Text("Cannot save, scene is null.");
         }
-        if (SliderInt("Random Seed", (int*)&settings->mRandomSeed, -1, INT32_MAX/2)) {
-            sead::GlobalRandom::instance()->init(settings->mRandomSeed);
-        }
-        al::Sequence* curSequence = GameSystemFunction::getGameSystem()->mSequence;
-        if (curSequence && al::isEqualString(curSequence->getName().cstr(), "HakoniwaSequence")) {
-            auto gameSeq = (HakoniwaSequence *) curSequence;
-            auto curScene = gameSeq->curScene;
-            WorldResourceLoader* loader = gameSeq->mResourceLoader;
+        if (BeginTabBar("Options")) {
+            auto* settings = Settings::instance();
+            if (BeginTabItem("General")) {
+                Checkbox("Show Actor Positions", &settings->isShowTrans);
+                Checkbox("Show Camera Target", &settings->isShowCameraTargetTrans);
+                Checkbox("Make Moons Re-Collectable", &settings->isEnableMoonRefresh);
+                Checkbox("Make Moons Always Collectable", &settings->isEnableGreyMoonRefresh);
+                Checkbox("Auto-Saving", &settings->isEnableAutosave);
+                Checkbox("Make Cutscenes Always Skippable", &settings->isSkipCutscenes);
 
-            bool isInGame =
-                curScene && curScene->mIsAlive && al::isEqualString(curScene->mName.cstr(), "StageScene");
-            if (isInGame)
-                Text("Scene Name: %s", ((StageScene*)(curScene))->seedText);
-            if (ImGui::CollapsingHeader("World List")) {
-                SliderInt("Scenario", &scenario, -1, 15);
-                for (auto &entry: gameSeq->mGameDataHolder.mData->mWorldList->mWorldList) {
-                    if (ImGui::TreeNode(entry.mMainStageName)) {
-                        if (isInGame) {
-                            if (ImGui::Button("Warp to World")) {
-                                if (scenario == 0) scenario = -1;
-                                PlayerHelper::warpPlayer(entry.mMainStageName, gameSeq->mGameDataHolder, scenario);
-                                loader->tryDestroyWorldResource();
-                            }
+                const char* previewValue = Settings::mPatternEntries[settings->mMofumofuPatternIndex].type;
+                SetNextItemWidth(150.f);
+                if (BeginCombo("Mechawiggler Patterns", previewValue)) {
+                    for (int i = 0; i < IM_ARRAYSIZE(Settings::mPatternEntries); i++) {
+                        const bool isSelected = (settings->mMofumofuPatternIndex == i);
+                        if (Selectable(Settings::mPatternEntries[i].type, isSelected, 0, ImVec2(150.f,0.f)))
+                            settings->mMofumofuPatternIndex = i;
+                        if (isSelected)
+                            SetItemDefaultFocus();
+                    }
+                    EndCombo();
+                }
+                SetNextItemWidth(150.f);
+                if (SliderInt("Random Seed", (int*)&settings->mRandomSeed, -1, INT32_MAX/2)) {
+                    sead::GlobalRandom::instance()->init(settings->mRandomSeed);
+                }
+                al::Sequence* curSequence = GameSystemFunction::getGameSystem()->mSequence;
+                if (curSequence && al::isEqualString(curSequence->getName().cstr(), "HakoniwaSequence")) {
+                    auto gameSeq = (HakoniwaSequence *) curSequence;
+                    auto curScene = gameSeq->curScene;
+                    WorldResourceLoader* loader = gameSeq->mResourceLoader;
+                    bool isInGame = curScene && curScene->mIsAlive && curScene == static_cast<StageScene*>(curScene);
+                    if (isInGame) {
+                        auto* stageScene = static_cast<StageScene*>(curScene);
+                        Text("Scene Name: %s", stageScene->seedText);
+                        PlayerActorBase *playerBase = rs::getPlayerActor(stageScene);
+                        if (ImGui::Button("Kill Mario")) {
+                            PlayerHelper::killPlayer(playerBase);
                         }
+                    }
+                    if (ImGui::CollapsingHeader("World List")) {
+                        SliderInt("Scenario", &scenario, -1, 15);
+                        for (auto &entry: gameSeq->mGameDataHolder.mData->mWorldList->mWorldList) {
+                            if (ImGui::TreeNode(entry.mMainStageName)) {
+                                if (isInGame) {
+                                    if (ImGui::Button("Warp to World")) {
+                                        if (scenario == 0) scenario = -1;
+                                        PlayerHelper::warpPlayer(entry.mMainStageName, gameSeq->mGameDataHolder, scenario);
+                                        loader->tryDestroyWorldResource();
+                                    }
+                                }
 
-                        ImGui::BulletText("Clear Main Scenario: %d", entry.mClearMainScenario);
-                        ImGui::BulletText("Ending Scenario: %d", entry.mEndingScenario);
-                        ImGui::BulletText("Moon Rock Scenario: %d", entry.mMoonRockScenario);
-                        if (ImGui::TreeNode("Main Quest Infos")) {
-                            for (int i = 0; i < entry.mQuestInfoCount; ++i) {
-                                ImGui::BulletText("Quest %d Scenario: %d", i, entry.mMainQuestIndexes[i]);
-                            }
-                            ImGui::TreePop();
-                        }
-                        if (ImGui::CollapsingHeader("Database Entries")) {
-                            for (auto &dbEntry: entry.mStageNames) {
-                                if (ImGui::TreeNode(dbEntry.mStageName.cstr())) {
-                                    ImGui::BulletText("Stage Category: %s", dbEntry.mStageCategory.cstr());
-                                    ImGui::BulletText("Stage Use Scenario: %d", dbEntry.mUseScenario);
-
-                                    if (isInGame) {
-                                        ImGui::Bullet();
-                                        if (ImGui::SmallButton("Warp to Stage")) {
-                                            if (scenario == 0) scenario = -1;
-                                            PlayerHelper::warpPlayer(dbEntry.mStageName.cstr(),
-                                                                     gameSeq->mGameDataHolder, scenario);
-                                            loader->tryDestroyWorldResource();
-                                        }
+                                ImGui::BulletText("Clear Main Scenario: %d", entry.mClearMainScenario);
+                                ImGui::BulletText("Ending Scenario: %d", entry.mEndingScenario);
+                                ImGui::BulletText("Moon Rock Scenario: %d", entry.mMoonRockScenario);
+                                if (ImGui::TreeNode("Main Quest Infos")) {
+                                    for (int i = 0; i < entry.mQuestInfoCount; ++i) {
+                                        ImGui::BulletText("Quest %d Scenario: %d", i, entry.mMainQuestIndexes[i]);
                                     }
                                     ImGui::TreePop();
                                 }
+                                if (ImGui::CollapsingHeader("Database Entries")) {
+                                    for (auto &dbEntry: entry.mStageNames) {
+                                        if (ImGui::TreeNode(dbEntry.mStageName.cstr())) {
+                                            ImGui::BulletText("Stage Category: %s", dbEntry.mStageCategory.cstr());
+                                            ImGui::BulletText("Stage Use Scenario: %d", dbEntry.mUseScenario);
+
+                                            if (isInGame) {
+                                                ImGui::Bullet();
+                                                if (ImGui::SmallButton("Warp to Stage")) {
+                                                    if (scenario == 0) scenario = -1;
+                                                    PlayerHelper::warpPlayer(dbEntry.mStageName.cstr(),
+                                                                             gameSeq->mGameDataHolder, scenario);
+                                                    loader->tryDestroyWorldResource();
+                                                }
+                                            }
+                                            ImGui::TreePop();
+                                        }
+                                    }
+                                }
+                                ImGui::TreePop();
                             }
                         }
-                        ImGui::TreePop();
                     }
                 }
+                EndTabItem();
             }
-            if (isInGame) {
-                StageScene *stageScene = (StageScene *) gameSeq->curScene;
-                PlayerActorBase *playerBase = rs::getPlayerActor(stageScene);
 
-                if (ImGui::Button("Kill Mario")) {
-                    PlayerHelper::killPlayer(playerBase);
-                }
+            if (BeginTabItem("HitSensor")) {
+                Checkbox("Show All HitSensors", &settings->isShowSensors);
+                Checkbox("Show Eye Sensors", &settings->isShowEyes);
+                Checkbox("Show Attack Sensors", &settings->isShowAttack);
+                Checkbox("Show Npc Sensors", &settings->isShowNpc);
+                Checkbox("Show Bindable Sensors", &settings->isShowBindable);
+                Checkbox("Show EnemyBody Sensors", &settings->isShowEnemyBody);
+                Checkbox("Show MapObj Sensors", &settings->isShowMapObj);
+                Checkbox("Show Player Sensors", &settings->isShowPlayerAll);
+                Checkbox("Show Other Sensors", &settings->isShowOther);
+                SetNextItemWidth(150.f);
+                SliderFloat("Sensor Alpha", &settings->mSensorAlpha, 0.0f, 1.0f, "%.1f");
+                EndTabItem();
             }
+
+            if (BeginTabItem("Collider")) {
+                Text("No collider options available at this time.");
+                EndTabItem();
+            }
+
+            if(BeginTabItem("AreaObj")) {
+                Text("No AreaObj options available at this time.");
+                EndTabItem();
+
+            }
+            EndTabBar();
         }
+
     }
     End();
 }
 
+
+
+static constexpr int frameCount = 120;
+extern float framerates[frameCount];
+extern int frameIndex;
+
+static constexpr float infoWidth = 400.f;
+
 void drawPageInfo() {
-    if (!isShowInfo)
-        return;
+    if (!isShowInfo) return;
     if (Begin("Info", &isShowInfo)) {
+        SetWindowFontScale(1.25f);
         al::Sequence* curSequence = GameSystemFunction::getGameSystem()->mSequence;
         al::Scene* scene = curSequence->mCurrentScene;
         if (CollapsingHeader("General Info")) {
@@ -218,7 +231,12 @@ void drawPageInfo() {
             } else {
                 Text("Scene is null.");
             }
+
+            Text("FPS: %.2f", framerates[frameIndex]);
+            PlotLines("FPS",framerates, frameCount, frameIndex, nullptr, 0.f, 65.f, ImVec2(150.f,40.f));
+
         }
+
         if (CollapsingHeader("Player Info")) {
             if (scene) {
                 PlayerActorBase* playerBase = rs::getPlayerActor(scene);
@@ -231,42 +249,51 @@ void drawPageInfo() {
                     sead::Vector3f playerRPY = sead::Vector3f::zero;
                     al::calcQuatRotateDegree(&playerRPY, playerQuat);
                     int status;
-                    char* name;
-                    size_t bitch = 512;
-                    name = abi::__cxa_demangle(typeid(*playerBase).name(), (char*)alloca(bitch), &bitch, &status);
+                    char* name = abi::__cxa_demangle(typeid(*playerBase).name(), nullptr, nullptr, &status);
                     Text("Player Name: %s", name);
+                    SetNextItemWidth(infoWidth);
                     InputFloat3("Position", (float*)&playerTrans, "%.3f", ImGuiInputTextFlags_ReadOnly);
+                    SetNextItemWidth(infoWidth);
                     InputFloat3("Velocity", (float*)&playerVel, "%.3f", ImGuiInputTextFlags_ReadOnly);
+                    SetNextItemWidth(infoWidth);
                     InputFloat("Total Speed", &playerSpeed, 0.0f, 0.0f, "%.3f", ImGuiInputTextFlags_ReadOnly);
+                    SetNextItemWidth(infoWidth);
                     InputFloat("Horizontal Speed", &playerSpeedH, 0.0f, 0.0f, "%.3f", ImGuiInputTextFlags_ReadOnly);
+                    SetNextItemWidth(infoWidth);
                     InputFloat4("Quat Rotation", (float*)&playerQuat, "%.3f", ImGuiInputTextFlags_ReadOnly);
+                    SetNextItemWidth(infoWidth);
                     InputFloat3("Euler Angles", (float*)&playerRPY, "%.3f", ImGuiInputTextFlags_ReadOnly);
                     al::NerveKeeper* playerNerveKeeper = playerBase->getNerveKeeper();
                     if (playerNerveKeeper) {
                         al::Nerve* playerNerve = playerNerveKeeper->getCurrentNerve();
-                        char* name2;
-                        name2 = abi::__cxa_demangle(typeid(*playerNerve).name(), (char*)alloca(bitch), &bitch, &status);
+                        char* name2 = abi::__cxa_demangle(typeid(*playerNerve).name(), nullptr, nullptr, &status);
                         Text("Current Nerve: %s", name2 + 23 + strlen(name) + 3);
+                        free(name);
+                        free(name2);
                         if (playerNerveKeeper->mStateCtrl) {
                             al::State* state = playerNerveKeeper->mStateCtrl->findStateInfo(playerNerve);
                             if (state) {
-                                name = abi::__cxa_demangle(typeid(*state->mStateBase).name(), (char*)alloca(bitch), &bitch, &status);
+                                name = abi::__cxa_demangle(typeid(*state->mStateBase).name(), nullptr, nullptr, &status);
                                 Text("Current State: %s", name);
                                 al::Nerve* stateNerve = state->mStateBase->getNerveKeeper()->getCurrentNerve();
-                                name2 = abi::__cxa_demangle(typeid(*stateNerve).name(), (char*)alloca(bitch), &bitch, &status);
+                                name2 = abi::__cxa_demangle(typeid(*stateNerve).name(), nullptr, nullptr, &status);
                                 Text("State Nerve: %s", name2 + 23 + strlen(name) + 3);
+                                free(name);
+                                free(name2);
                             }
                         }
                     } else {
                         Text("NerveKeeper is null.");
+                        free(name);
                     }
+
                     if (CollapsingHeader("Cappy Info")) {
                         if (!al::isEqualString(typeid(*playerBase).name(), typeid(PlayerActorHakoniwa).name()))  {
                             Text("No HackCap in stage.\n");
                         } else {
                             auto* player = static_cast<PlayerActorHakoniwa*>(playerBase);
                             HackCap* cap = player->mHackCap;
-                            name = abi::__cxa_demangle(typeid(*cap).name(), (char*)alloca(bitch), &bitch, &status);
+                            name = abi::__cxa_demangle(typeid(*cap).name(), nullptr, nullptr, &status);
                             sead::Vector3f capTrans = al::getTrans(cap);
                             sead::Vector3f capVel = al::getVelocity(cap);
                             float capSpeed = al::calcSpeed(cap);
@@ -275,17 +302,22 @@ void drawPageInfo() {
                             sead::Quatf capQuat = al::getQuat(cap);
                             al::calcQuatRotateDegree(&capRPY, capQuat);
                             Text("Cappy Name: %s", name);
+                            SetNextItemWidth(infoWidth);
                             InputFloat3("Position", (float*)&capTrans, "%.3f", ImGuiInputTextFlags_ReadOnly);
+                            SetNextItemWidth(infoWidth);
                             InputFloat3("Velocity", (float*)&capVel, "%.3f", ImGuiInputTextFlags_ReadOnly);
+                            SetNextItemWidth(infoWidth);
                             InputFloat("Total Speed", &capSpeed, 0.0f, 0.0f, "%.3f", ImGuiInputTextFlags_ReadOnly);
+                            SetNextItemWidth(infoWidth);
                             InputFloat("Horizontal Speed", &capSpeedH, 0.0f, 0.0f, "%.3f", ImGuiInputTextFlags_ReadOnly);
+                            SetNextItemWidth(infoWidth);
                             InputFloat4("Quat Rotation", (float*)&capQuat, "%.3f", ImGuiInputTextFlags_ReadOnly);
+                            SetNextItemWidth(infoWidth);
                             InputFloat3("Euler Angles", (float*)&capRPY, "%.3f", ImGuiInputTextFlags_ReadOnly);
                             al::NerveKeeper* capNerveKeeper = cap->getNerveKeeper();
                             if (capNerveKeeper) {
                                 al::Nerve* capNerve = capNerveKeeper->getCurrentNerve();
-                                char* name2;
-                                name2 = abi::__cxa_demangle(typeid(*capNerve).name(), (char*)alloca(bitch), &bitch, &status);
+                                char* name2 = abi::__cxa_demangle(typeid(*capNerve).name(), nullptr, nullptr, &status);
                                 Text("Current Nerve: %s", name2+23+strlen(name)+3);
                                 free(name);
                                 free(name2);
@@ -305,6 +337,42 @@ void drawPageInfo() {
             }
         }
 
+        if (CollapsingHeader("Camera Info")) {
+            if (scene) {
+                al::CameraDirector* director = scene->getCameraDirector();
+                if (director) {
+                    al::CameraPoseUpdater* updater = director->getPoseUpdater(0);
+                    if (updater && updater->mTicket) {
+                        al::CameraPoser* cam = updater->mTicket->mPoser;
+                        if (cam) {
+                            Text("Current Camera: %s", cam->mPoserName);
+                            int status;
+                            char* name = abi::__cxa_demangle(typeid(*cam).name(), nullptr, nullptr, &status);
+                            Text("Camera Type: %s", name);
+                            free(name);
+                            SetNextItemWidth(infoWidth);
+                            InputFloat3("Position", (float*)&cam->mPosition, "%.3f", ImGuiInputTextFlags_ReadOnly);
+                            SetNextItemWidth(infoWidth);
+                            InputFloat3("Target Pos", (float*)&cam->mTargetTrans, "%.3f", ImGuiInputTextFlags_ReadOnly);
+                            SetNextItemWidth(infoWidth);
+                            InputFloat3("Up-Dir", (float*)&cam->mCameraUp, "%.3f", ImGuiInputTextFlags_ReadOnly);
+                            if(CollapsingHeader("Camera View Matrix")) {
+                                InputFloat4("Matrix 'X'", (float*)&cam->mViewMtx.m[0], "%.3f", ImGuiInputTextFlags_ReadOnly);
+                                InputFloat4("Matrix 'Y'", (float*)&cam->mViewMtx.m[1], "%.3f", ImGuiInputTextFlags_ReadOnly);
+                                InputFloat4("Matrix 'Z'", (float*)&cam->mViewMtx.m[2], "%.3f", ImGuiInputTextFlags_ReadOnly);
+                            }
+                            InputFloat("FOV-Y", &cam->mFovyDegree, 0.0f, 0.0f, "%.3f", ImGuiInputTextFlags_ReadOnly);
+
+                        } else {
+                            Text("Camera is null.");
+                        }
+                    }
+                }
+            } else {
+                Text("Scene is null.");
+            }
+        }
+
     }
     End();
 }
@@ -312,6 +380,7 @@ void drawPageInfo() {
 void drawPageTAS() {
     if (!isShowTAS) return;
     if (Begin("TAS", &isShowTAS)) {
+        SetWindowFontScale(1.25f);
         TAS* tas = TAS::instance();
         Text("Loaded Script: %s", tas->hasScript() ? tas->getScriptName() : "None.");
         if (Button("Start TAS"))

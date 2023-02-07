@@ -1,7 +1,8 @@
 #pragma once
 
+#include "CameraPoser.h"
 
-class CameraPoserFollowLimit {
+class CameraPoserFollowLimit : public al::CameraPoser {
     public:
         unsigned char massive[0x200];
 

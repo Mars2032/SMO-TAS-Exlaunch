@@ -20,6 +20,7 @@ public:
     bool isShowPlayerAll = true;
     bool isShowHoldObj = true;
     bool isShowOther = true;
+    bool isShowCameraTargetTrans = true;
     float mSensorAlpha = 0.15f;
     bool isSkipCutscenes = false;
     bool isEnableAutosave = true;
@@ -65,9 +66,10 @@ public:
 
 void drawPageMain();
 void drawPageDebug();
-void drawPageHitSensor();
+void drawPagePrimitiveRenderer();
 void drawPageAbout();
 void drawPageInfo();
 void drawPageTAS();
+void drawPageOptions();
 void drawPageGeneralOptions();
 void optionsHooks();
